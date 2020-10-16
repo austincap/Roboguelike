@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://TileSets/simple-tiles-over.tres" type="TileSet" id=1]
+
+[node name="OverTileMap" type="TileMap" groups=[
+"tilemap",
+]]
+scale = Vector2( 2, 2 )
+z_index = 3
+tile_set = ExtResource( 1 )
+cell_size = Vector2( 32, 32 )
+cell_custom_transform = Transform2D( 32, 0, 0, 32, 0, 0 )
+format = 1

@@ -1,0 +1,36 @@
+[gd_scene format=2]
+
+[node name="InterfaceChoices" type="Node2D"]
+
+[node name="SelectedOption" type="Node2D" parent="."]
+scale = Vector2( 3, 3 )
+
+[node name="Talk" type="Label" parent="SelectedOption"]
+margin_left = -16.0043
+margin_top = -29.1508
+margin_right = 23.9957
+margin_bottom = -15.1508
+text = "Talk"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Fork" type="Label" parent="."]
+margin_left = 77.0
+margin_top = -34.0
+margin_right = 117.0
+margin_bottom = -16.0
+text = "Fork"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Trade" type="Label" parent="."]
+margin_left = -113.174
+margin_top = -30.8655
+margin_right = -73.1736
+margin_bottom = -16.8655
+text = "Trade"
+__meta__ = {
+"_edit_use_anchors_": false
+}

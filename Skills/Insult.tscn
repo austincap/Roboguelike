@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 14.5047, 7.952 )
+
+[node name="Insult" type="Area2D"]
+collision_layer = 2
+collision_mask = 2
+
+[node name="Label" type="Label" parent="."]
+margin_left = -17.6422
+margin_top = -4.41055
+margin_right = 22.3578
+margin_bottom = 9.58945
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "#rekt"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 1 )

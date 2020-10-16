@@ -1,0 +1,31 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Conversation/Rhetoric/flatter.png" type="Texture" id=1]
+[ext_resource path="res://Conversation/Rhetoric/deflect.png" type="Texture" id=2]
+[ext_resource path="res://Conversation/Rhetoric/insult.png" type="Texture" id=3]
+[ext_resource path="res://Conversation/Rhetoric/joke.png" type="Texture" id=4]
+[ext_resource path="res://Conversation/Rhetoric/expound.png" type="Texture" id=5]
+
+[node name="Rhetoric" type="Node2D"]
+
+[node name="0-None" type="Sprite" parent="."]
+visible = false
+
+[node name="1-Deflect" type="Sprite" parent="."]
+texture = ExtResource( 2 )
+
+[node name="2-Expound" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 5 )
+
+[node name="3-Flatter" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 1 )
+
+[node name="4-Insult" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 3 )
+
+[node name="5-Joke" type="Sprite" parent="."]
+visible = false
+texture = ExtResource( 4 )
