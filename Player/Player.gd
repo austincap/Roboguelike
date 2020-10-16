@@ -9,7 +9,7 @@ var talkDamage = 0
 var social_stamina = 30
 var aimAngle = 0
 
-enum possiblePlayerStates{TALKING, BUYING, COMBAT, HACKING, NORMAL}
+enum possiblePlayerStates{TALKING, BUYING, COMBAT, HACKING, NORMAL, LOCKEDON}
 var currentPlayerState = possiblePlayerStates.NORMAL
 var interfaceRequest = false
 
@@ -51,14 +51,13 @@ var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
 var skillUsed = false
-var firingDiction = Vector2()
 var directionVector = Vector2(0, 0)
-var deadzone = 0.25
+var deadzone = 0.15
 var controllerangle = Vector2.ZERO
 var xAxisRL = Input.get_joy_axis(0, JOY_AXIS_2)
 var yAxisUD = Input.get_joy_axis(0 ,JOY_AXIS_3)
 var prevTalkDamageReceived = 0
-
+var signalSpeed = 200
 
 var leftStrength
 var rightStrength
@@ -66,7 +65,6 @@ var downStrength
 var upStrength
 
 func _ready():
-	#currentSkillEquipped.add_child(selected)
 	$Camera2D.make_current()
 
 
@@ -77,30 +75,27 @@ func _physics_process(delta):
 		else:
 			exitTalkSession(currentTarget)
 	else:
-		self.move_and_collide(directionVector)
 		var xAxisRL = Input.get_joy_axis(0, JOY_AXIS_2)
 		var yAxisUD = Input.get_joy_axis(0 ,JOY_AXIS_3)
-		if skillUsed == false:
-			leftStrength = Input.get_action_strength("aim_left")
-			rightStrength = Input.get_action_strength("aim_right")
-			downStrength = Input.get_action_strength("aim_down")
-			upStrength = Input.get_action_strength("aim_up")
-			if abs(xAxisRL) > deadzone || abs(yAxisUD) > deadzone:
-				controllerangle = Vector2(xAxisRL, yAxisUD).angle()
-				var x = controllerangle
-				$InterfaceSignal.position = Vector2(150*(rightStrength-leftStrength)+20*(((x*sin(2*x)+sin(1.8*x)*sin(1.8*x))/1.7)-0.075), 150*(downStrength-upStrength)+20*(((x*sin(2*x)+sin(1.8*x)*sin(1.8*x))/1.7)-0.075))
-				#currentSkillEquipped.position = Vector2(150*(rightStrength-leftStrength)+20*(((x*sin(2*x)+sin(1.8*x)*sin(1.8*x))/1.7)-0.075), 150*(downStrength-upStrength)+20*(((x*sin(2*x)+sin(1.8*x)*sin(1.8*x))/1.7)-0.075))
-		else:
-			#currentSkillEquipped.position += signalSpeed*delta*getShotVelocityVector()
-			$InterfaceSignal.position += signalSpeed*delta*getShotVelocityVector()
+		if abs(xAxisRL) > deadzone || abs(yAxisUD) > deadzone:
+			controllerangle = Vector2(xAxisRL, yAxisUD).angle()
+			var x = controllerangle
+			$InterfaceSignal.position = signalSpeed*getShotVelocityVector()
 		self.position += 200*delta*getLeftStickVector()
+		if currentPlayerState == possiblePlayerStates.LOCKEDON:
+			$InterfaceSignal.global_position = currentTarget.global_position
+			if Input.is_action_pressed("interface"):
+				initiateTalkSession(currentTarget)
+			else:
+				currentTarget.currentActionState = currentTarget.actionState.SEARCH
+				currentPlayerState == possiblePlayerStates.NORMAL
+	move_and_collide(delta*getLeftStickVector())
 
 func getShotVelocityVector():
 	return Vector2(Input.get_action_strength("aim_right")-Input.get_action_strength("aim_left"),  Input.get_action_strength("aim_down")-Input.get_action_strength("aim_up"))
 
 func getLeftStickVector():
 	return Vector2(Input.get_action_strength("rightmove")-Input.get_action_strength("leftmove"),  Input.get_action_strength("downmove")-Input.get_action_strength("upmove"))
-
 
 
 func _input(event):
@@ -111,13 +106,16 @@ func _input(event):
 			changeSkill(skillDict[topic][4])
 		if event.is_action_released("y"):
 			changeSkill(skillDict[topic][5])
-		if event.is_action_pressed("interface"):
-			if interfaceRequest and currentTarget != self:
-				print(currentTarget)
-				print("ETGETETG")
-				initiateTalkSession(currentTarget)
-			else:
-				sendInterfaceRequestInThisDirection(getShotVelocityVector())
+	elif currentPlayerState == possiblePlayerStates.LOCKEDON:
+		if !event.is_action_pressed("interface"):
+			if event.is_action_pressed("downmove"):
+				currentPlayerState = possiblePlayerStates.NORMAL
+			if event.is_action_pressed("upmove"):
+				currentPlayerState = possiblePlayerStates.NORMAL
+			if event.is_action_pressed("rightmove"):
+				currentPlayerState = possiblePlayerStates.NORMAL
+			if event.is_action_pressed("leftmove"):
+				currentPlayerState = possiblePlayerStates.NORMAL
 	elif currentPlayerState == possiblePlayerStates.TALKING:
 		if event.is_action_pressed("downmove"):
 			changeTopicOrRhetoric(1)
@@ -127,8 +125,6 @@ func _input(event):
 			changeTopicOrRhetoric(3)
 		if event.is_action_pressed("leftmove"):
 			changeTopicOrRhetoric(2)
-#		if event.is_action_pressed("interface"):
-#			exitTalkSession()
 		if event.is_action_released("rt"):
 			$ConvoScene.modulate = Color(1,1,1,1)
 			$SkillTween.interpolate_property($ConvoScene, "global_position", self.global_position+Vector2(80,-70), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
@@ -139,17 +135,13 @@ func sendInterfaceRequestInThisDirection(direction):
 	$SkillTween.start()
 
 func initiateTalkSession(NPCnode):
-	print(NPCnode.get_name())
-	print(NPCnode.get_parent().get_name())
-	interfaceRequest = true
-	currentTarget = NPCnode
-	get_node("ConvoScene/ConvoBubble").set_deferred("monitorable", true)
-	$ConvoScene.visible = true
 	currentPlayerState = possiblePlayerStates.TALKING
+	NPCnode.currentActionState = NPCnode.actionState.TALKING
+	get_node("ConvoScene").set_deferred("monitorable", true)
+	$ConvoScene.visible = true
 	NPCnode.currentTarget = self.global_position
 	NPCnode.get_node("ConvoScene").visible = true
-	NPCnode.get_node("ConvoScene/ConvoBubble").set_deferred("monitorable", true)
-	NPCnode.currentActionState = NPCnode.actionState.TALKING
+	NPCnode.get_node("ConvoScene").set_deferred("monitorable", true)
 	$InterfaceSignal.global_position = currentTarget.global_position
 	$InterfaceSignal/Particles2D.process_material.initial_velocity = 300
 	print('talk session initiated')
@@ -157,10 +149,9 @@ func initiateTalkSession(NPCnode):
 
 func exitTalkSession(NPCnode):
 	$InterfaceSignal.global_position = self.global_position
-	$InterfaceSignal/Particles2D.process_material.initial_velocity = 10
-	get_node("ConvoScene/ConvoBubble").set_deferred("monitorable", false)
+	$InterfaceSignal/Particles2D.process_material.initial_velocity = 150
+	get_node("ConvoScene").set_deferred("monitorable", false)
 	$ConvoScene.visible = false
-	interfaceRequest = false
 	NPCnode.NPCexitTalkSession(NPCnode.actionState.SEARCH)
 	currentPlayerState = possiblePlayerStates.NORMAL
 
@@ -210,11 +201,8 @@ func handleConvoBubble(NPCnode):
 		talkDamageDealt = 0.3
 		pass #joke (incorporates knowledge)
 	talkDamageDealt *= rhetoricMultiplier
-	print(self.get_name() + " delivered this much talk damage: " + str(talkDamageDealt))
+	print(self.get_name() + " delivered this much talk damage: " + str(talkDamageDealt) +" to " + str(NPCnode.get_name()))
 	return talkDamageDealt
-	#NPCnode.fluctStats[2] += talkDamageDealt #add "talk damage to personal affinity"
-	#NPCnode.initialReactionToSignalReceived(self) #react to it
-	
 
 func changeTopicOrRhetoric(choice):
 	var nextTopicId
@@ -287,7 +275,7 @@ func executeSkill(skillNode):
 	skillUsed = true
 	$SkillReturnTimer.start()
 
-var signalSpeed = 200
+
 
 
 func changeSkill(newtopic):
@@ -309,28 +297,60 @@ func _on_Area2D_area_entered(area):
 	print('testete')
 	var ownerOfReceivedSignal = area.get_parent()
 	print(ownerOfReceivedSignal.get_name())
-	if area.is_in_group("convo") and ownerOfReceivedSignal.get_parent().is_in_group("NPC"):
-		prevTalkDamageReceived = handleConvoBubble(ownerOfReceivedSignal.get_parent())
-		reactionToNPCConvoBubble(ownerOfReceivedSignal.get_parent())
-	else: #if interfacesignal from NPC
-		react(3)
-		interfaceRequest = true
-		currentTarget = ownerOfReceivedSignal
+	if ownerOfReceivedSignal.is_in_group("player") == false:
+		if area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("NPC"):
+			prevTalkDamageReceived = handleConvoBubble(ownerOfReceivedSignal)
+			reactionToNPCConvoBubble(ownerOfReceivedSignal)
+		else: #if interfacesignal from NPC
+			react(3)
+			#interfaceRequest = true
+			#currentTarget = ownerOfReceivedSignal
 
 
 func reactionToNPCConvoBubble(NPCnode):
-	print("player received convo")
+	print("PLAYER REACT TO NPC CONVO")
 	NPCnode.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( NPCnode.get_node("AnimationPlayer"), "animation_finished" )
 	NPCnode.get_node("ConvoScene").position = Vector2(80, -70)
 	NPCnode.get_node("ConvoScene").scale = Vector2(1, 1)
 	NPCnode.get_node("ConvoScene").modulate = Color(1, 1, 1, 0.8)
 	print(prevTalkDamageReceived)
-	if prevTalkDamageReceived > 0:
-		$ReactParticles.amount = int(prevTalkDamageReceived*10)
+	if self.prevTalkDamageReceived > 0:
+		$ReactParticles.process_material.hue_variation = 0.6
+		$ReactParticles.amount = int(prevTalkDamageReceived*30)
+		print(int(prevTalkDamageReceived*30))
 		$ReactParticles.emitting = true
 		$ReactParticles.restart()
 	else:
-		react(2)
-		print("fuck you")
+		$ReactParticles.process_material.hue_variation = 0.3
+		$ReactParticles.amount = int(self.prevTalkDamageReceived*30)
+		print(int(prevTalkDamageReceived*30))
+		$ReactParticles.emitting = true
+		$ReactParticles.restart()
 
+
+func reactionToConvoBubbleGeneric(nodeThatSentTheBubble, nodeThatReceivedTheBubble):
+	print("REACTING TO CONVO")
+	nodeThatSentTheBubble.get_node("AnimationPlayer").play("returnConvoNode")
+	yield( nodeThatSentTheBubble.get_node("AnimationPlayer"), "animation_finished" )
+	nodeThatSentTheBubble.get_node("ConvoScene").position = Vector2(80, -70)
+	nodeThatSentTheBubble.get_node("ConvoScene").scale = Vector2(1, 1)
+	nodeThatSentTheBubble.get_node("ConvoScene").modulate = Color(1, 1, 1, 0.8)
+	print(nodeThatReceivedTheBubble.prevTalkDamageReceived)
+	if nodeThatReceivedTheBubble.prevTalkDamageReceived > 0:
+		react(1)
+#		$ReactParticles.amount = int(nodeThatSentTheBubble.prevTalkDamageReceived*100)
+#		print(int(nodeThatSentTheBubble.prevTalkDamageReceived*100))
+#		$ReactParticles.emitting = true
+#		$ReactParticles.restart()
+	else:
+		react(2)
+
+
+func _on_InterfaceSignal_body_entered(body):
+	#print(body.get_name())
+	if body.is_in_group("NPC"):
+		body.react(3)
+		self.currentTarget = body
+		self.currentPlayerState = possiblePlayerStates.LOCKEDON
+		body.currentActionState = body.actionState.LOCKEDON

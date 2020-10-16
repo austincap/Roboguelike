@@ -29,7 +29,7 @@ var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
 #ACTION STATES
-enum actionState{TALKING, SLEEP, SEARCH, MOVING, ATTACK}
+enum actionState{TALKING, SLEEP, SEARCH, MOVING, ATTACK, LOCKEDON}
 var currentActionState = actionState.SEARCH
 var justChangedState = false
 var justChangedDirection = false
@@ -43,8 +43,8 @@ var rotation_dir = 0
 var sensoryVector
 var tempRotation = 0
 var velocity = Vector2(0,0)
-var speed = 100
-var maxSpeed = 100
+var speed = 50
+var maxSpeed = 70
 var prevPosition
 var acceleration = Vector2(0,0)
 var detectUpDownLeftRight = [false, false, false, false]
@@ -60,9 +60,6 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):
-	#rotation += 1 * 1 * delta
-	#self.move_and_collide(directionVector)
-	
 	if currentActionState == actionState.TALKING:
 		pass
 	elif currentActionState == actionState.SLEEP:
@@ -101,6 +98,8 @@ func _physics_process(delta):
 #			velocity = (currentTarget-self.global_transform.origin).normalized()
 	elif currentActionState == actionState.ATTACK:
 		pass
+	elif currentActionState == actionState.LOCKEDON:
+		pass
 
 
 #pick up item, receive player interfacesignal and convos
@@ -112,46 +111,51 @@ func _on_Area2D_area_entered(area):
 			self.currentActionState = actionState.SEARCH
 			ownerOfReceivedSignal.queue_free()
 			#print('obtained fuel')
-	elif area.is_in_group("convo") and ownerOfReceivedSignal.get_parent().is_in_group("player"):
+	elif area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("player"):
 		print("CONVO RECEIVED BY NPC")
-		print("ownerOfRece")
 		print(ownerOfReceivedSignal)
-		prevTalkDamageReceived = ownerOfReceivedSignal.get_parent().handleConvoBubble(self)
+		self.prevTalkDamageReceived = ownerOfReceivedSignal.handleConvoBubble(self)
 		fluctStats[2] += prevTalkDamageReceived #add talkDamageDealt to affinity
-		NPCreactionToConvoBubble(ownerOfReceivedSignal.get_parent())
-	elif area.is_in_group("interfacesignal") and ownerOfReceivedSignal.is_in_group("player"):
-		ownerOfReceivedSignal.currentTarget = self
-		print("INTERFACE SIGNAL RECEIVED")
-		react(3)
-		self.currentActionState = actionState.TALKING
-		ownerOfReceivedSignal.initiateTalkSession(self)
+		#ownerOfReceivedSignal.genericReactionToConvoBubble(ownerOfReceivedSignal, self)
+		NPCreactionToConvoBubble(ownerOfReceivedSignal)
+		
+#	elif area.is_in_group("interfacesignal") and ownerOfReceivedSignal.is_in_group("player") and ownerOfReceivedSignal.lockedOn==false:
+#		ownerOfReceivedSignal.currentTarget = self
+#		print("INTERFACE SIGNAL RECEIVED")
+#		react(3)
+#		#self.currentActionState = actionState.TALKING
+#		ownerOfReceivedSignal.currentPlayerState = ownerOfReceivedSignal.possiblePlayerStates.LOCKEDON
+#		#ownerOfReceivedSignal.initiateTalkSession(self)
 
-func _on_Area2D_area_exited(area):
-	var ownerOfReceivedSignal = area.get_parent()
-	if area.is_in_group("interfacesignal") and ownerOfReceivedSignal.is_in_group("player"):
-		ownerOfReceivedSignal.currentPlayerState = ownerOfReceivedSignal.possiblePlayerStates.NORMAL
-		area.global_position = ownerOfReceivedSignal.global_position
+#func _on_Area2D_area_exited(area):
+#	var ownerOfReceivedSignal = area.get_parent()
+#	if area.is_in_group("interfacesignal") and ownerOfReceivedSignal.is_in_group("player"):
+#		ownerOfReceivedSignal.currentPlayerState = ownerOfReceivedSignal.possiblePlayerStates.NORMAL
+#		area.global_position = ownerOfReceivedSignal.global_position
 
 func NPCreactionToConvoBubble(playerNode):
+	#return convo node to player
 	playerNode.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( playerNode.get_node("AnimationPlayer"), "animation_finished" )
 	playerNode.get_node("ConvoScene").position = Vector2(80, -70)
 	playerNode.get_node("ConvoScene").scale = Vector2(1, 1)
 	playerNode.get_node("ConvoScene").modulate = Color(1, 1, 1, 0.8)
-	if prevTalkDamageReceived > 0.15:
-		react(1)
-		print("WHOA!!")
-	elif prevTalkDamageReceived > 0.5:
-		print("Wow!")
-	elif prevTalkDamageReceived > 0.0:
-		print("meh.")
-	elif prevTalkDamageReceived > -0.1:
-		print("...")
+	print(prevTalkDamageReceived)
+	if prevTalkDamageReceived > 0:
+		$ReactParticles.process_material.hue_variation = 0.6
+		$ReactParticles.amount = int(self.prevTalkDamageReceived*30)
+		print(int(self.prevTalkDamageReceived*30))
+		$ReactParticles.emitting = true
+		$ReactParticles.restart()
 	else:
-		react(2)
-		print("fuck you")
-	calculateDesperation()
-	calculateAttackDecision(playerNode)
+		$ReactParticles.process_material.hue_variation = 0.3
+		$ReactParticles.amount = int(self.prevTalkDamageReceived*30)
+		print(int(self.prevTalkDamageReceived*30))
+		$ReactParticles.emitting = true
+		$ReactParticles.restart()
+	#calculateDesperation()
+	#calculateAttackDecision(playerNode)
+	sendConvoBubble()
 
 func calculateAttackDecision(playerNode):
 	var attackOrNot = ((personality[0]+personality[3]*rand_range(-0.3,0.3)+personality[4])+(racismArray[0]+fluctStats[2])*lilStats[3])*2+fluctStats[1]
@@ -356,7 +360,7 @@ func react(reactionId):
 	$Reactions.get_child(reactionId).visible = false
 
 func NPCexitTalkSession(newActionState):
-	get_node("ConvoScene/ConvoBubble").set_deferred("monitorable", false)
+	get_node("ConvoScene").set_deferred("monitorable", false)
 	$ConvoScene.visible = false
 	self.currentActionState = newActionState
 
