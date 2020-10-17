@@ -27,7 +27,7 @@ var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
 #ACTION STATES
-enum actionState{TALKING, SLEEP, SEARCH, MOVING, ATTACK, LOCKEDON}
+enum actionState{TALKING, SLEEP, SEARCH, MOVING, ATTACK, LOCKEDON, PATHFINDING}
 var currentActionState = actionState.SEARCH
 var justChangedState = false
 var justChangedDirection = false
@@ -48,18 +48,58 @@ var acceleration = Vector2(0,0)
 var detectUpDownLeftRight = [false, false, false, false]
 
 
-# Called when the node enters the scene tree for the first time.
+var navSpeed := 300.0
+var path := PoolVector2Array() setget set_path
+
+func set_path(value: PoolVector2Array) -> void:
+	path = value
+	if value.size() == 0:
+		return
+	currentActionState = actionState.PATHFINDING
+
+func move_along_path(distance: float) -> void:
+	var start_point := position
+	for i in range(path.size()):
+		var distance_to_next := start_point.distance_to(path[0])
+		if distance <= distance_to_next and distance >= 0.0:
+			position = start_point.linear_interpolate(path[0], distance/distance_to_next) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
+			velocity = (currentTarget-self.global_transform.origin).normalized()
+			#print(velocity)
+			if abs(velocity.x) < 0.1 or abs(velocity.y) < 0.1:
+				print(velocity.x*velocity.x+velocity.y*velocity.y)
+				start_point += Vector2(rand_range(-5, 5), rand_range(-5, 5))
+				position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
+			break
+		elif distance < 0.0:
+			position = path[0]
+			currentActionState = actionState.SEARCH
+			break
+		distance -= distance_to_next
+		start_point = path[0]
+		path.remove(0)
+
 func _ready():
+	currentActionState = actionState.SEARCH
 	self.currentTarget = self.global_position
 	velocity = (currentTarget-self.global_transform.origin).normalized()
 	$AnimationPlayer.play("RayCastAnim")
-	prevPosition = self.global_position
+
+
+# Called when the node enters the scene tree for the first time.
+#func _ready():
+#	self.currentTarget = self.global_position
+#	velocity = (currentTarget-self.global_transform.origin).normalized()
+#	$AnimationPlayer.play("RayCastAnim")
+#	prevPosition = self.global_position
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):
 	if currentActionState == actionState.TALKING:
 		pass
+	elif currentActionState == actionState.PATHFINDING:
+		self.move_and_slide(velocity * delta * speed)
+		move_along_path(navSpeed*delta)
 	elif currentActionState == actionState.SLEEP:
 		pass
 	elif currentActionState == actionState.SEARCH:
@@ -247,8 +287,11 @@ func _on_SensoryRayCast2D_body_entered(body):
 	if body.is_in_group("player"):
 		if body.currentPlayerState != body.possiblePlayerStates.TALKING:
 			currentTarget = body.global_position
-			$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
-			$Tween.start()
+			print(self.get_parent().get_name())
+			self.get_parent().moveNPC(self)
+			self.currentActionState = self.actionState.PATHFINDING
+			#$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+			#$Tween.start()
 		#velocity = (currentTarget-self.global_transform.origin).normalized()
 			
 
@@ -307,21 +350,17 @@ func _on_LookRightArea_body_exited(body):
 		detectUpDownLeftRight[3] = false
 
 
-#pathfinding
-func _on_SensoryRayCast2D_area_entered(area):
-	#print(area.get_parent().get_name())
-	if area.is_in_group("interesting"):
-		#print("interesting thing found by " + self.get_name())
-		calculateBehavior()
-
-
 #resource locating
 func _on_BigSensoryRayCast2D_area_entered(area):
 	#print("FOUND " + area.get_parent().get_name())
-	justFound = true
-	currentActionState = actionState.MOVING
+	#justFound = true
+	#currentActionState = actionState.MOVING
+	#currentTarget = area.global_position
+	#velocity = (currentTarget-self.global_transform.origin).normalized()
 	currentTarget = area.global_position
-	velocity = (currentTarget-self.global_transform.origin).normalized()
+	print(self.get_parent().get_name())
+	self.get_parent().moveNPC(self)
+	self.currentActionState = self.actionState.PATHFINDING
 
 #player detection
 func _on_BigSensoryRayCast2D_body_entered(body):
