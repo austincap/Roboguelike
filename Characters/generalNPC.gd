@@ -1,6 +1,4 @@
 extends KinematicBody2D
-var Selected = preload("res://Characters/Selected.tscn")
-var selected = Selected.instance()
 var ConvoScene = preload("res://Conversation/ConvoScene.tscn")
 var convoScene = ConvoScene.instance()
 

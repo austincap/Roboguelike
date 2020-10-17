@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Equipment/SpinSlashSword.gd" type="Script" id=1]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 17.2371, 3.08534 )
+
+[node name="SpinSlashSword" type="Node2D"]
+script = ExtResource( 1 )
+
+[node name="SpinSlashSword" type="Area2D" parent="." groups=[
+"strike",
+"weapon",
+]]
+position = Vector2( 32, 0 )
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpinSlashSword"]
+shape = SubResource( 1 )
+
+[node name="Polygon2D" type="Polygon2D" parent="SpinSlashSword"]
+position = Vector2( 0.0994339, 0.298321 )
+color = Color( 0.647059, 0.219608, 0.219608, 1 )
+polygon = PoolVector2Array( -16.8536, 4.65711, 17.2371, 0.461323, -17.2033, -4.7834 )
+
+[node name="Tween" type="Tween" parent="."]
+[connection signal="body_entered" from="SpinSlashSword" to="." method="_on_SpinSlashSword_body_entered"]

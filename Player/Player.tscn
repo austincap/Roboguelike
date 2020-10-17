@@ -1,24 +1,22 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://Player/Player.gd" type="Script" id=1]
-[ext_resource path="res://Topics/TheResistance.tscn" type="PackedScene" id=2]
-[ext_resource path="res://Skills/SmallTalk.tscn" type="PackedScene" id=3]
-[ext_resource path="res://Skills/Insult.tscn" type="PackedScene" id=4]
-[ext_resource path="res://Topics/Technology.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Characters/Forker.png" type="Texture" id=2]
+[ext_resource path="res://Equipment/SpinSlashSword.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Equipment/Minigun.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Conversation/ConvoScene.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Conversation/Reactions/Reactions.tscn" type="PackedScene" id=7]
-[ext_resource path="res://Player/InterfaceChoices.tscn" type="PackedScene" id=8]
 [ext_resource path="res://Conversation/Reactions/ReactParticles.tscn" type="PackedScene" id=9]
 
 [sub_resource type="CircleShape2D" id=1]
-radius = 28.9979
+radius = 18.1235
 
 [sub_resource type="CapsuleShape2D" id=2]
-radius = 28.9908
+radius = 15.574
 height = 0.761993
 
 [sub_resource type="CircleShape2D" id=3]
-radius = 33.8418
+radius = 23.2389
 
 [sub_resource type="ParticlesMaterial" id=4]
 flag_disable_z = true
@@ -89,6 +87,7 @@ tracks/1/keys = {
 z_index = 2
 collision_mask = 33
 script = ExtResource( 1 )
+equipmentSlot = [ ExtResource( 3 ), ExtResource( 4 ) ]
 
 [node name="Area2D" type="Area2D" parent="."]
 collision_layer = 0
@@ -98,25 +97,8 @@ collision_mask = 36
 shape = SubResource( 1 )
 
 [node name="Polygon2D" type="Polygon2D" parent="."]
+visible = false
 polygon = PoolVector2Array( 43.2906, 22.4888, -0.800323, 32.4192, -51.6438, 2.62805, -1.99196, -33.1213, 44.085, -12.0689 )
-
-[node name="SmallTalk" parent="." instance=ExtResource( 3 )]
-visible = false
-position = Vector2( -89, 73 )
-
-[node name="TheResistance" parent="." instance=ExtResource( 2 )]
-visible = false
-position = Vector2( 30, 91 )
-
-[node name="Insult" parent="." instance=ExtResource( 4 )]
-visible = false
-position = Vector2( -65, -66 )
-
-[node name="Technology" parent="." instance=ExtResource( 5 )]
-visible = false
-position = Vector2( -144, 9 )
-
-[node name="Tween" type="Tween" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 
@@ -162,12 +144,20 @@ scale = Vector2( 1.2, 1.2 )
 anims/React = SubResource( 5 )
 anims/returnConvoNode = SubResource( 6 )
 
-[node name="InterfaceChoices" parent="." instance=ExtResource( 8 )]
-visible = false
-
 [node name="ReactParticles" parent="." instance=ExtResource( 9 )]
 emitting = false
 one_shot = true
+
+[node name="Sprite" type="Sprite" parent="."]
+texture = ExtResource( 2 )
+hframes = 4
+frame = 1
+
+[node name="EquippedItemNode" type="Node2D" parent="."]
+
+[node name="HungerTimer" type="Timer" parent="."]
+autostart = true
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]
 [connection signal="timeout" from="SkillReturnTimer" to="." method="_on_SkillReturnTimer_timeout"]
 [connection signal="body_entered" from="InterfaceSignal" to="." method="_on_InterfaceSignal_body_entered"]
+[connection signal="timeout" from="HungerTimer" to="." method="_on_HungerTimer_timeout"]

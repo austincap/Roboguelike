@@ -1,37 +1,18 @@
 extends KinematicBody2D
-var Selected = preload("res://Selected.tscn")
-var selected = Selected.instance()
 var raceId = 0
-var perception = 1
-var charisma = 2
-var intelligence = 1
-var talkDamage = 0
 var social_stamina = 30
 var aimAngle = 0
 
-enum possiblePlayerStates{TALKING, BUYING, COMBAT, HACKING, NORMAL, LOCKEDON}
+enum possiblePlayerStates{TALKING, TRADING, COMBAT, HACKING, NORMAL, LOCKEDON}
 var currentPlayerState = possiblePlayerStates.NORMAL
 var interfaceRequest = false
 
-var topic = "SmallTalk"
+
 var topicId = 0
 var rhetoricId = 1
-onready var currentSkillEquipped = get_node("SmallTalk")
-#skillDict {SKill:[skillID, skill/topicStat (if applicable), skillEquation (if applicable), SS cost, next selection]}
-#onready var skillDict = {
-#	"SmallTalk":[0, 3, currentTarget.lilStats[1]*2, 1, "TheResistance", "Technology"], 
-#	"TheResistance":[1, 3, 0, 1, "Insult", "SmallTalk"], 
-#	"Insult":[2, 1, currentTarget.lilStats[1]+currentTarget.lilStats[2], 2, "Technology", "TheResistance"], 
-#	"Technology":[3, 1, 0, 1, "SmallTalk", "Insult"]
-#	}
-#skillDict {Skill:[skillID, knowledge level, placeholder, SS cost, next selection, prev selection]}
-onready var skillDict = {
-	"SmallTalk":[0, 0.3, 0, 1, "TheResistance", "Technology"], 
-	"TheResistance":[7, 0.1, 0, 1, "Insult", "SmallTalk"], 
-	"Insult":[2, 0.1, 0, 2, "Technology", "TheResistance"], 
-	"Technology":[3, 0.1, 0, 1, "SmallTalk", "Insult"]
-	}
-	
+var currentEquipmentIndex = 0
+export var equipmentSlot = [1, 1]
+
 #INVENTORY AND SKILLS
 var inventory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #inventory ID numbers, position corresponds to inventory arrangement
 var resourceStats = [100, 30, 50, 20, 10] #[crystals, metal, fuel, carbon fiber, rubber] when hits 0 you're dead, able to trade/sell resources to others by multiplying by consumption rates
@@ -59,14 +40,11 @@ var yAxisUD = Input.get_joy_axis(0 ,JOY_AXIS_3)
 var prevTalkDamageReceived = 0
 var signalSpeed = 200
 
-var leftStrength
-var rightStrength
-var downStrength
-var upStrength
 
 func _ready():
 	$Camera2D.make_current()
-
+	var test = equipmentSlot[currentEquipmentIndex].instance()
+	$EquippedItemNode.add_child(test)
 
 func _physics_process(delta):
 	if currentPlayerState == possiblePlayerStates.TALKING:
@@ -80,6 +58,7 @@ func _physics_process(delta):
 		if abs(xAxisRL) > deadzone || abs(yAxisUD) > deadzone:
 			controllerangle = Vector2(xAxisRL, yAxisUD).angle()
 			var x = controllerangle
+			$EquippedItemNode.rotation_degrees = rad2deg(controllerangle)
 			$InterfaceSignal.position = signalSpeed*getShotVelocityVector()
 		self.position += 200*delta*getLeftStickVector()
 		if currentPlayerState == possiblePlayerStates.LOCKEDON:
@@ -97,15 +76,26 @@ func getShotVelocityVector():
 func getLeftStickVector():
 	return Vector2(Input.get_action_strength("rightmove")-Input.get_action_strength("leftmove"),  Input.get_action_strength("downmove")-Input.get_action_strength("upmove"))
 
-
 func _input(event):
 	if currentPlayerState == possiblePlayerStates.NORMAL or currentPlayerState == possiblePlayerStates.COMBAT:
 		if event.is_action_released("rt"):
-			executeSkill(currentSkillEquipped)
+			$EquippedItemNode.get_child(0).use(getShotVelocityVector())
 		if event.is_action_released("x"):
-			changeSkill(skillDict[topic][4])
+			changeEquippedItem(-1)
 		if event.is_action_released("y"):
-			changeSkill(skillDict[topic][5])
+			changeEquippedItem(1)
+		if event.is_action_pressed("downmove"):
+			$EquippedItemNode.rotation_degrees = 90
+			$Sprite.frame = 0
+		if event.is_action_pressed("upmove"):
+			$EquippedItemNode.rotation_degrees = -90
+			$Sprite.frame = 1
+		if event.is_action_pressed("rightmove"):
+			$EquippedItemNode.rotation_degrees = 0
+			$Sprite.frame = 3
+		if event.is_action_pressed("leftmove"):
+			$EquippedItemNode.rotation_degrees = 180
+			$Sprite.frame = 2
 	elif currentPlayerState == possiblePlayerStates.LOCKEDON:
 		if !event.is_action_pressed("interface"):
 			if event.is_action_pressed("downmove"):
@@ -130,10 +120,6 @@ func _input(event):
 			$SkillTween.interpolate_property($ConvoScene, "global_position", self.global_position+Vector2(80,-70), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 			$SkillTween.start()
 
-func sendInterfaceRequestInThisDirection(direction):
-	$SkillTween.interpolate_property($InterfaceSignal, "global_position", self.global_position, direction*signalSpeed, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
-	$SkillTween.start()
-
 func initiateTalkSession(NPCnode):
 	currentPlayerState = possiblePlayerStates.TALKING
 	NPCnode.currentActionState = NPCnode.actionState.TALKING
@@ -145,7 +131,6 @@ func initiateTalkSession(NPCnode):
 	$InterfaceSignal.global_position = currentTarget.global_position
 	$InterfaceSignal/Particles2D.process_material.initial_velocity = 300
 	print('talk session initiated')
-	
 
 func exitTalkSession(NPCnode):
 	$InterfaceSignal.global_position = self.global_position
@@ -262,34 +247,26 @@ func react(reactionId):
 	yield( $AnimationPlayer, "animation_finished" )
 	$Reactions.get_child(reactionId).visible = false
 
-func executeSkill(skillNode):
-	var skillName = skillNode.get_name()
-	topic = skillName
-	topicId = skillDict[skillName][0]
-	talkDamage = skillDict[skillName][1]
-#	if topic == "SmallTalk" or topic == "Insult":
-#		talkDamage = skillDict[skillName][2] + skillDict[skillName][1]
-#	elif topic == "TheResistance" or topic == "Technology":
-#		talkDamage = skillDict[skillName][1]
-	social_stamina -= skillDict[skillName][3]
-	skillUsed = true
-	$SkillReturnTimer.start()
-
-
-
-
-func changeSkill(newtopic):
-	currentSkillEquipped.remove_child(get_node(topic+"/Selected"))
-	currentSkillEquipped.visible = false
-	currentSkillEquipped = get_node(newtopic)
-	currentSkillEquipped.visible = true
-	currentSkillEquipped.add_child(Selected.instance())
-	topic = newtopic
-
+func changeEquippedItem(changeDirection):
+	print(currentEquipmentIndex)
+	if 0 == currentEquipmentIndex:
+		if changeDirection == 1:
+			currentEquipmentIndex+=1
+		else:
+			currentEquipmentIndex = equipmentSlot.size()-1
+	elif equipmentSlot.size()-1 == currentEquipmentIndex:
+		if changeDirection == 1:
+			currentEquipmentIndex = 0
+		else:
+			currentEquipmentIndex-=1
+	else:
+		currentEquipmentIndex+=changeDirection
+	$EquippedItemNode.get_child(0).queue_free()
+	var test = equipmentSlot[currentEquipmentIndex].instance()
+	$EquippedItemNode.add_child(test)
 
 func _on_SkillReturnTimer_timeout():
 	skillUsed = false
-
 
 #receive interface signals and convo bubbles
 func _on_Area2D_area_entered(area):
@@ -318,13 +295,11 @@ func reactionToNPCConvoBubble(NPCnode):
 	if self.prevTalkDamageReceived > 0:
 		$ReactParticles.process_material.hue_variation = 0.6
 		$ReactParticles.amount = int(prevTalkDamageReceived*30)
-		print(int(prevTalkDamageReceived*30))
 		$ReactParticles.emitting = true
 		$ReactParticles.restart()
 	else:
 		$ReactParticles.process_material.hue_variation = 0.3
 		$ReactParticles.amount = int(self.prevTalkDamageReceived*30)
-		print(int(prevTalkDamageReceived*30))
 		$ReactParticles.emitting = true
 		$ReactParticles.restart()
 
@@ -351,6 +326,13 @@ func _on_InterfaceSignal_body_entered(body):
 	#print(body.get_name())
 	if body.is_in_group("NPC"):
 		body.react(3)
+		self.react(3)
 		self.currentTarget = body
 		self.currentPlayerState = possiblePlayerStates.LOCKEDON
 		body.currentActionState = body.actionState.LOCKEDON
+
+
+func _on_HungerTimer_timeout():
+	for i in range(5):
+		resourceStats[i] -= consumptionRates[i]
+	print(resourceStats)
