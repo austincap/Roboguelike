@@ -11,6 +11,7 @@ func _ready():
 	pass # Replace with function body.
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
+func moveNPC(NPCnode):
+	var new_path = $Navigation2D.get_simple_path(NPCnode.global_position, NPCnode.currentTarget, true)
+	$Line2D.points = new_path
+	NPCnode.path = new_path 

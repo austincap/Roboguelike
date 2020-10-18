@@ -21,8 +21,8 @@ var currentTarget
 #PERSONALITY TRAITS
 var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[general aggression, openess/curiosity, erraticness, greed/selfishness, grit]
 var racismArray = [0, 0, 0, 0, 0] #[hackers, shooters, slinkers, scrappers, forkers] #higher value is more racist
-var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small talk, local area, advice, tribal gossip, big talk, compliments, insults, expound, deflect, joke]
-var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, local area, advice, tribal gossip, big talk, compliments, insults, expound, deflect, joke]
+var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small talk, local area, advice, tribal gossip, big talk, deflect, emphasize, flatter, insult, joke]
+var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, local area, advice, tribal gossip, big talk, deflect, emphasize, flatter, insult, joke]
 #TEMP STATES
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
@@ -152,7 +152,7 @@ func _on_Area2D_area_entered(area):
 	elif area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("player"):
 		print("CONVO RECEIVED BY NPC")
 		print(ownerOfReceivedSignal)
-		self.prevTalkDamageReceived = ownerOfReceivedSignal.handleConvoBubble(self)
+		self.prevTalkDamageReceived = ownerOfReceivedSignal.handleConvoBubble(self, ownerOfReceivedSignal)
 		fluctStats[2] += prevTalkDamageReceived #add talkDamageDealt to affinity
 		#ownerOfReceivedSignal.genericReactionToConvoBubble(ownerOfReceivedSignal, self)
 		NPCreactionToConvoBubble(ownerOfReceivedSignal)
@@ -192,7 +192,8 @@ func NPCreactionToConvoBubble(playerNode):
 		$ReactParticles.emitting = true
 		$ReactParticles.restart()
 	#calculateDesperation()
-	#calculateAttackDecision(playerNode)
+	#calculateAttackDecision(playerNode
+	currentTarget = playerNode.global_position
 	sendConvoBubble()
 
 func calculateAttackDecision(playerNode):

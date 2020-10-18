@@ -1,11 +1,9 @@
 extends KinematicBody2D
 var raceId = 0
-var social_stamina = 30
 var aimAngle = 0
 
 enum possiblePlayerStates{TALKING, TRADING, COMBAT, HACKING, NORMAL, LOCKEDON}
 var currentPlayerState = possiblePlayerStates.NORMAL
-var interfaceRequest = false
 
 
 var topicId = 0
@@ -26,8 +24,8 @@ var currentTarget = self
 #PERSONALITY TRAITS
 var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[general aggression, curiosity, erraticness, greed, grit]
 #var racismArray = [0, 0, 0, 0, 0] #[hackers, shooters, slinkers, scrappers, forkers] #higher value is more racist
-var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small talk, local area, advice, tribal gossip, big talk, compliments, insults, expound, deflect, joke]
-#var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, local area, advice, tribal gossip, big talk, compliments, insults, expound, deflect, joke]
+var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
+#var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
 #TEMP STATES
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
@@ -153,10 +151,10 @@ func _input(event):
 
 func initiateTalkSession(NPCnode):
 	currentPlayerState = possiblePlayerStates.TALKING
+	NPCnode.currentTarget = self.global_position
 	NPCnode.currentActionState = NPCnode.actionState.TALKING
 	get_node("ConvoScene").set_deferred("monitorable", true)
 	$ConvoScene.visible = true
-	NPCnode.currentTarget = self.global_position
 	NPCnode.get_node("ConvoScene").visible = true
 	NPCnode.get_node("ConvoScene").set_deferred("monitorable", true)
 	$InterfaceSignal.global_position = currentTarget.global_position
@@ -171,53 +169,48 @@ func exitTalkSession(NPCnode):
 	NPCnode.NPCexitTalkSession(NPCnode.actionState.SEARCH)
 	currentPlayerState = possiblePlayerStates.NORMAL
 
-func handleConvoBubble(NPCnode):
+func handleConvoBubble(receiverNode, senderNode):
+	#topics are clamped between 0 and 2
 	var talkDamageDealt = 0
-	if self.topicId == 0:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		talkDamageDealt = self.lilStats[0]-NPCnode.lilStats[1] #smalltalk = player charisma- NPC openness 
-	elif self.topicId == 1:
-		self.bigStats[0] -= 2 #social stamina cost 2
-		talkDamageDealt = 0.3
-		pass #local area talk damage = 
-	elif self.topicId == 2:
-		self.bigStats[0] -= 2 #social stamina cost 3
-		talkDamageDealt = 0.3
+	if senderNode.topicId == 0: #small talk
+		senderNode.bigStats[0] -= 1 #social stamina cost 1
+		talkDamageDealt = clamp((senderNode.lilStats[0]-receiverNode.lilStats[1]), 0, 1) #smalltalk = player charisma- NPC openness 
+	elif senderNode.topicId == 1: #you
+		senderNode.bigStats[0] -= 1 #social stamina cost 1 
+		talkDamageDealt = clamp((receiverNode.personality[3]+receiverNode.interestArray[senderNode.topicId]-(1-senderNode.knowledgeArray[senderNode.topicId])), 0, 1)
+	elif senderNode.topicId == 2: #gossip
+		senderNode.bigStats[0] -= 2 #social stamina cost 2
+		talkDamageDealt = clamp((receiverNode.interestArray[senderNode.topicId]*(1+senderNode.knowledgeArray[senderNode.topicId])), 0, 1)
 		pass #advice = 
-	elif self.topicId == 3:
-		talkDamageDealt = 0.3
-		pass #gossip (incorporates racism)
-	elif self.topicId == 4:
-		talkDamageDealt = 0.3
-		pass #big talk
-		
+	elif senderNode.topicId == 3: #news
+		senderNode.bigStats[0] -= 2 #social stamina cost 2
+		talkDamageDealt = clamp((receiverNode.interestArray[senderNode.topicId]*(1+senderNode.knowledgeArray[senderNode.topicId])), 0, 1)
+	elif senderNode.topicId == 4: #big talk
+		senderNode.bigStats[0] -= 2 #social stamina cost 2
+		talkDamageDealt = clamp((senderNode.personality[1]+receiverNode.interestArray[senderNode.topicId]*(1+senderNode.knowledgeArray[senderNode.topicId])), 0, 1)
+	#rhetorics are clamped between -2 and 2; high risk, high reward
 	var rhetoricMultiplier = 1
-	if self.rhetoricId == 0:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		talkDamageDealt = 0.3
-		pass #none
-	elif self.rhetoricId == 1:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		talkDamageDealt = 0.3
-		pass #deflect
-	elif self.rhetoricId == 2:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		talkDamageDealt = 0.3
-		pass #expound
-	elif self.rhetoricId == 3:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		talkDamageDealt = 0.3
-		pass #flatter
-	elif self.rhetoricId == 4:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		rhetoricMultiplier = 1+clamp((self.lilStats[0]+self.lilStats[2]-NPCnode.lilStats[1]-self.personality[4]), 0, 1)
-		pass #insult = (chr+atk-enemy int- enemy grit)
-	elif self.rhetoricId == 5:
-		self.bigStats[0] -= 3 #social stamina cost 3
-		talkDamageDealt = 0.3
-		pass #joke (incorporates knowledge)
+	if senderNode.rhetoricId == 0: #none
+		senderNode.bigStats[0] -= 0 #social stamina cost 0
+	elif senderNode.rhetoricId == 1: #deflect
+		senderNode.bigStats[0] -= 3 #social stamina cost 3 (+3-2)
+		rhetoricMultiplier = 1+clamp((-receiverNode.lilStats[0]-receiverNode.lilStats[1]+receiverNode.personality[0]+receiverNode.personality[1]+senderNode.personality[4]), -2, 2)
+	elif senderNode.rhetoricId == 2: #emphasize
+		senderNode.bigStats[0] -= 2 #social stamina cost 2 (+2-2)
+		rhetoricMultiplier = 1+clamp((senderNode.lilStats[0]-receiverNode.lilStats[1]-receiverNode.personality[0]+senderNode.personality[3]), -2, 2)
+	elif senderNode.rhetoricId == 3: #flatter
+		senderNode.bigStats[0] -= 3 #social stamina cost 3 (+3-2)
+		rhetoricMultiplier = 1+clamp((senderNode.lilStats[0]-receiverNode.lilStats[1]-receiverNode.personality[0]+senderNode.personality[1]+receiverNode.personality[3]), -2, 2)
+	elif senderNode.rhetoricId == 4: #insult
+		senderNode.bigStats[0] -= 3 #social stamina cost 3 (+3-2)
+		rhetoricMultiplier = 1+clamp((-receiverNode.lilStats[0]+senderNode.lilStats[1]+senderNode.lilStats[4]+senderNode.personality[0]-receiverNode.personality[4]), -2, 2)
+	elif senderNode.rhetoricId == 5: #joke
+		senderNode.bigStats[0] -= 1 #social stamina cost 2 (+2-2)
+		rhetoricMultiplier = 1+clamp((senderNode.lilStats[0]-receiverNode.lilStats[1]+senderNode.lilStats[4]-receiverNode.personality[0]), -2, 2)
 	talkDamageDealt *= rhetoricMultiplier
-	print(self.get_name() + " delivered this much talk damage: " + str(talkDamageDealt) +" to " + str(NPCnode.get_name()))
+	talkDamageDealt += rand_range(-receiverNode.personality[2], receiverNode.personality[2])/2
+	print("MULTIPLIED: " + str(rhetoricMultiplier))
+	print(senderNode.get_name() + " delivered this much talk damage: " + str(talkDamageDealt) +" to " + str(receiverNode.get_name()))
 	return talkDamageDealt
 
 func changeTopicOrRhetoric(choice):
@@ -307,7 +300,7 @@ func _on_Area2D_area_entered(area):
 	print(ownerOfReceivedSignal.get_name())
 	if ownerOfReceivedSignal.is_in_group("player") == false:
 		if area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("NPC"):
-			prevTalkDamageReceived = handleConvoBubble(ownerOfReceivedSignal)
+			self.prevTalkDamageReceived = handleConvoBubble(self, ownerOfReceivedSignal)
 			reactionToNPCConvoBubble(ownerOfReceivedSignal)
 		else: #if interfacesignal from NPC
 			react(3)
@@ -359,6 +352,7 @@ func _on_InterfaceSignal_body_entered(body):
 		body.react(3)
 		self.react(3)
 		self.currentTarget = body
+		body.currentTarget = self
 		self.currentPlayerState = possiblePlayerStates.LOCKEDON
 		body.currentActionState = body.actionState.LOCKEDON
 
@@ -366,4 +360,4 @@ func _on_InterfaceSignal_body_entered(body):
 func _on_HungerTimer_timeout():
 	for i in range(5):
 		resourceStats[i] -= consumptionRates[i]
-	print(resourceStats)
+	#print(resourceStats)
