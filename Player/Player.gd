@@ -151,7 +151,7 @@ func _input(event):
 
 func initiateTalkSession(NPCnode):
 	currentPlayerState = possiblePlayerStates.TALKING
-	NPCnode.currentTarget = self.global_position
+	NPCnode.currentTarget = self
 	NPCnode.currentActionState = NPCnode.actionState.TALKING
 	get_node("ConvoScene").set_deferred("monitorable", true)
 	$ConvoScene.visible = true

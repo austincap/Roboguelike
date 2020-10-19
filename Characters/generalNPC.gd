@@ -17,7 +17,7 @@ var NPCprevTopicId = 0
 var NPCprevRhetoricId = 0
 var topicId = 0
 var rhetoricId = 0
-var currentTarget
+var currentTarget = null
 #PERSONALITY TRAITS
 var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[general aggression, openess/curiosity, erraticness, greed/selfishness, grit]
 var racismArray = [0, 0, 0, 0, 0] #[hackers, shooters, slinkers, scrappers, forkers] #higher value is more racist
@@ -63,13 +63,22 @@ func move_along_path(distance: float) -> void:
 		var distance_to_next := start_point.distance_to(path[0])
 		if distance <= distance_to_next and distance >= 0.0:
 			position = start_point.linear_interpolate(path[0], distance/distance_to_next) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
-			velocity = (currentTarget-self.global_transform.origin).normalized()
-			#print(velocity)
-			if abs(velocity.x) < 0.1 or abs(velocity.y) < 0.1:
-				print(velocity.x*velocity.x+velocity.y*velocity.y)
-				start_point += Vector2(rand_range(-5, 5), rand_range(-5, 5))
-				position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
-			break
+			if currentTarget == null:
+				break
+#			elif !currentTarget.get_ref():
+#				pass
+			else:
+				if str(currentTarget) == "[Deleted Object]":
+					break
+				else:
+					#print(currentTarget.get_name())
+					velocity = (currentTarget.global_position-self.global_transform.origin).normalized()
+					#print(velocity)
+					if abs(velocity.x) < 0.1 or abs(velocity.y) < 0.1:
+						print(velocity.x*velocity.x+velocity.y*velocity.y)
+						start_point += Vector2(rand_range(-5, 5), rand_range(-5, 5))
+						position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
+					break
 		elif distance < 0.0:
 			position = path[0]
 			currentActionState = actionState.SEARCH
@@ -80,9 +89,10 @@ func move_along_path(distance: float) -> void:
 
 func _ready():
 	currentActionState = actionState.SEARCH
-	self.currentTarget = self.global_position
-	velocity = (currentTarget-self.global_transform.origin).normalized()
+	self.currentTarget = self
+	velocity = (currentTarget.global_position-self.global_transform.origin).normalized()
 	$AnimationPlayer.play("RayCastAnim")
+	prevPosition = self.global_position
 
 
 # Called when the node enters the scene tree for the first time.
@@ -193,7 +203,7 @@ func NPCreactionToConvoBubble(playerNode):
 		$ReactParticles.restart()
 	#calculateDesperation()
 	#calculateAttackDecision(playerNode
-	currentTarget = playerNode.global_position
+	currentTarget = playerNode
 	sendConvoBubble()
 
 func calculateAttackDecision(playerNode):
@@ -269,7 +279,7 @@ func calculateWhatToTalkAbout():
 
 func sendConvoBubble():
 	$ConvoScene.modulate = Color(1,1,1,1)
-	$Tween.interpolate_property($ConvoScene, "global_position", self.global_position+Vector2(80,-70), currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	$Tween.interpolate_property($ConvoScene, "global_position", self.global_position+Vector2(80,-70), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 	$Tween.start()
 
 func calculateDesperation():
@@ -287,8 +297,9 @@ func _on_SensoryRayCast2D_body_entered(body):
 		tempRotation = $SensoryRayCast2D.rotation_degrees/2
 	if body.is_in_group("player"):
 		if body.currentPlayerState != body.possiblePlayerStates.TALKING:
-			currentTarget = body.global_position
+			currentTarget = body
 			print(self.get_parent().get_name())
+			print("TIJEOSTOP IEJTFP")
 			self.get_parent().moveNPC(self)
 			self.currentActionState = self.actionState.PATHFINDING
 			#$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
@@ -306,32 +317,32 @@ func _on_LookUpArea_body_entered(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[0] = true
 	if body.is_in_group("player"):
-		currentTarget = body.global_position
-		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		currentTarget = body
+		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 		$Tween.start()
 
 func _on_LookDownArea_body_entered(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[1] = true
 	if body.is_in_group("player"):
-		currentTarget = body.global_position
-		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		currentTarget = body
+		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 		$Tween.start()
 
 func _on_LookLeftArea_body_entered(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[2] = true
 	if body.is_in_group("player"):
-		currentTarget = body.global_position
-		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		currentTarget = body
+		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 		$Tween.start()
 
 func _on_LookRightArea_body_entered(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[3] = true
 	if body.is_in_group("player"):
-		currentTarget = body.global_position
-		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+		currentTarget = body
+		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 		$Tween.start()
 
 func _on_LookUpArea_body_exited(body):
@@ -353,29 +364,28 @@ func _on_LookRightArea_body_exited(body):
 
 #resource locating
 func _on_BigSensoryRayCast2D_area_entered(area):
-	#print("FOUND " + area.get_parent().get_name())
-	#justFound = true
-	#currentActionState = actionState.MOVING
-	#currentTarget = area.global_position
-	#velocity = (currentTarget-self.global_transform.origin).normalized()
-	currentTarget = area.global_position
-	print(self.get_parent().get_name())
-	self.get_parent().moveNPC(self)
-	self.currentActionState = self.actionState.PATHFINDING
+	var ownerOfReceivedSignal
+	if area.is_in_group("resource"):
+		self.currentTarget = area
+		ownerOfReceivedSignal = area.get_parent().get_parent()
+		ownerOfReceivedSignal.moveNPC(self)
+		self.currentActionState = self.actionState.PATHFINDING
+		print("FO*UND RESOURCE")
+
+	#self.currentActionState = self.actionState.PATHFINDING
 
 #player detection
 func _on_BigSensoryRayCast2D_body_entered(body):
 	#print(body.get_name())
 	if body.is_in_group("player"):
-		currentTarget = body.global_position
+		currentTarget = body
 
 func _on_Timer_timeout():
+	prevPosition = self.global_transform.origin
 	if self.currentActionState != actionState.TALKING:
 		justChangedDirection = false
 		justDetectedWall = false
 		detectUpDownLeftRight = [false, false, false, false]
-		#print(currentTarget)
-		velocity = (currentTarget-self.global_position).normalized()
 		prevPosition = self.global_position
 		#$AnimationPlayer.play("BigSensor")
 		if justFound == false:
@@ -383,7 +393,7 @@ func _on_Timer_timeout():
 			$Tween.interpolate_property($BigSensoryRayCast2D, "rotation_degrees", initRandRot, initRandRot+360, 2, Tween.TRANS_CUBIC, Tween.EASE_OUT)
 			$Tween.start()
 		else:
-			velocity = (currentTarget-self.global_transform.origin).normalized()
+			velocity = (currentTarget.global_position-self.global_transform.origin).normalized()
 	#	$BigSensoryRayCast2D.rotation_degrees = rand_range(-180,190)
 	#	$AnimationPlayer.play("BigSensor")
 	#	$BigSensoryRayCast2D.rotation_degrees = rand_range(-180,190)

@@ -15,14 +15,16 @@ var characterScene = preload("res://Characters/NPC.tscn")
 
 #var hazardScene = load("res://LevelElements/Hazard.tscn")
 
-var x_chunks = 5
-var y_chunks = 5
+var size_of_each_chunk = 1152
+var x_chunks = 6
+var y_chunks = 6
 var chunkArray = [
-	["2002", "2000", "2000", "2200", "0000"],
-	["0002", "0000", "0000", "0000", "0000"],
-	["0002", "0000", "0000", "0000", "0000"],
-	["0022", "0000", "0000", "0000", "0000"],
-	["0022", "0000", "0000", "0000", "0000"]
+	["2002", "2000", "2000", "2200", "0000", "0000"],
+	["0002", "0000", "0000", "0000", "0000", "0000"],
+	["0002", "0000", "0000", "0000", "0000", "0000"],
+	["0022", "0000", "0000", "0000", "0000", "0000"],
+	["0022", "0000", "0000", "0000", "0000", "0000"],
+	["0022", "0000", "0000", "0000", "0000", "0000"]
 	]
 
 var elementsChecked = false
@@ -30,7 +32,7 @@ var NPCArray = []
 var entranceArray = []
 
 var NPCLikelihood = 0.1
-var resourceLikelihood = 0.5
+var resourceLikelihood = 0.8
 var hazardLikelihood = 0.2
 
 func getRandomNumber(num):
@@ -82,9 +84,10 @@ func _ready():
 				southConnection = getRandomNumber(2)
 			chunkIdToGet = northConnection+eastConnection+southConnection+westConnection
 			chunkArray[y_chunk][x_chunk] = chunkIdToGet
-			scene = load("res://LevelGen/"+chunkIdToGet+".tscn")
+			#scene = load("res://LevelGen/"+chunkIdToGet+".tscn")
+			scene = load("res://LevelGen-alt/"+chunkIdToGet+".tscn")
 			chunk = scene.instance()
-			chunk.global_position = Vector2(576*x_chunk, 576*y_chunk)
+			chunk.global_position = Vector2(size_of_each_chunk*x_chunk, size_of_each_chunk*y_chunk)
 			add_child(chunk)
 			#add level elements to chunk
 			#add tunnels
@@ -130,29 +133,19 @@ func _ready():
 #				for i in int(getRandomNumber(3)):
 #					element = hazardScene.instance()
 #					tryToRandomlyPlaceElement(element, chunk)
-	$Camera2D.make_current()
+	#$Camera2D.make_current()
 
 func checkNPCs():
 	for element in NPCArray:
 		print(element)
 		if is_instance_valid(element) and element.is_in_group("NPC"):
-			print(element.velocity)
-			if element.velocity.x > -3 and element.velocity.x < 3 and element.velocity.y > -3 and element.velocity.y < 3:
-				
-				print("DELETE")
+			if element.global_transform.origin.distance_to(element.prevPosition) < 3: #how far it has to be to justify culling
 				element.queue_free()
-#		print(element)
-#		print(element.get_child(0))
-#		print(element.get_child(0).get_name())
-#		print(element.get_child(0).get_overlapping_bodies())
-#		if element.get_child(0).get_overlapping_bodies().size() > 0:
-#			element.queue_free()
-#			print(element.get_child(0).get_parent().get_name())
 	elementsChecked = true
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):
-	yield(get_tree().create_timer(0.9), "timeout")
+	yield(get_tree().create_timer(1.1), "timeout")
 	if elementsChecked == false:
 		checkNPCs()
 	
@@ -169,7 +162,10 @@ func tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn):
 		#print('overlap')
 		tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn)
 	else:
-		chunkToPlaceIn.add_child(elementToPlace)
-		NPCArray.append(elementToPlace)
+		if str(elementToPlace) == "[Deleted Object]":
+			print(str(elementToPlace))
+		else:
+			chunkToPlaceIn.add_child(elementToPlace)
+			NPCArray.append(elementToPlace)
 		#print('no overlap')
 	#print("done")
