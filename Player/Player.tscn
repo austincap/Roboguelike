@@ -85,12 +85,15 @@ tracks/1/keys = {
 "player",
 ]]
 z_index = 2
+collision_layer = 9
 collision_mask = 33
 script = ExtResource( 1 )
 equipmentSlot = [ ExtResource( 3 ), ExtResource( 4 ) ]
 
-[node name="Area2D" type="Area2D" parent="."]
-collision_layer = 0
+[node name="Area2D" type="Area2D" parent="." groups=[
+"player",
+]]
+collision_layer = 4
 collision_mask = 36
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
@@ -157,6 +160,8 @@ frame = 1
 
 [node name="HungerTimer" type="Timer" parent="."]
 autostart = true
+
+[node name="Line2D" type="Line2D" parent="."]
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]
 [connection signal="timeout" from="SkillReturnTimer" to="." method="_on_SkillReturnTimer_timeout"]
 [connection signal="body_entered" from="InterfaceSignal" to="." method="_on_InterfaceSignal_body_entered"]

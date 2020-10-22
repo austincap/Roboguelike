@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://TileSets/UnderTileMap.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Characters/NPC.tscn" type="PackedScene" id=2]
 [ext_resource path="res://TileSets/OverTileMap.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Resources/Fuel.tscn" type="PackedScene" id=4]
 
 [node name="Node2D" type="NavigationPolygonInstance"]
 
@@ -14,3 +16,11 @@ tile_data = PoolIntArray( -524297, 0, 0, -524296, 0, 0, -524295, 0, 0, -524294, 
 
 [node name="OverTileMap" parent="." instance=ExtResource( 3 )]
 scale = Vector2( 1, 1 )
+
+[node name="NPC" parent="." instance=ExtResource( 2 )]
+position = Vector2( 224, 224 )
+
+[node name="Fuel" parent="." instance=ExtResource( 4 )]
+position = Vector2( 50, 50 )
+
+[node name="NPC2" parent="." instance=ExtResource( 2 )]

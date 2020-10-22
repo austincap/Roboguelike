@@ -44,7 +44,6 @@ var velocity = Vector2(0,0)
 var speed = 50
 var maxSpeed = 70
 var prevPosition
-var acceleration = Vector2(0,0)
 var detectUpDownLeftRight = [false, false, false, false]
 
 
@@ -55,38 +54,55 @@ func set_path(value: PoolVector2Array) -> void:
 	path = value
 	if value.size() == 0:
 		return
-	currentActionState = actionState.PATHFINDING
+	#currentActionState = actionState.PATHFINDING
 
 func move_along_path(distance: float) -> void:
-	var start_point := position
+	var start_point := global_position
 	for i in range(path.size()):
 		var distance_to_next := start_point.distance_to(path[0])
 		if distance <= distance_to_next and distance >= 0.0:
-			position = start_point.linear_interpolate(path[0], distance/distance_to_next) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
-			if currentTarget == null:
+			global_position = start_point.linear_interpolate(path[0], distance/distance_to_next) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
+			if currentTarget == null or str(currentTarget) == "[Deleted Object]":
 				break
-#			elif !currentTarget.get_ref():
-#				pass
 			else:
-				if str(currentTarget) == "[Deleted Object]":
-					break
-				else:
-					#print(currentTarget.get_name())
-					velocity = (currentTarget.global_position-self.global_transform.origin).normalized()
-					#print(velocity)
-					position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
-					#if abs(velocity.x) < 0.1 or abs(velocity.y) < 0.1:
-						#print(velocity.x*velocity.x+velocity.y*velocity.y)
-						#start_point += Vector2(rand_range(-5, 5), rand_range(-5, 5))
-						#position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
-					break
+				#velocity = (currentTarget.global_position-self.global_transform.origin).normalized()
+				global_position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
+				#if abs(velocity.x) < 0.1 or abs(velocity.y) < 0.1:
+					#print(velocity.x*velocity.x+velocity.y*velocity.y)
+					#start_point += Vector2(rand_range(-5, 5), rand_range(-5, 5))
+					#position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
+				break
 		elif distance < 0.0:
-			position = path[0]
+			global_position = path[0]
 			currentActionState = actionState.SEARCH
 			break
 		distance -= distance_to_next
 		start_point = path[0]
+		#print(path[0])
 		path.remove(0)
+
+func moveNPC():
+	var new_path
+	if currentActionState == actionState.PATHFINDING:
+		$Polygon2D.modulate = Color(1, 0, 0)
+		get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
+		new_path = self.get_parent().get_parent().get_simple_path(self.global_position, self.currentTarget.global_position, true)
+	else:
+		$Polygon2D.modulate = Color(0, 1, 0)
+		get_node("BigSensoryRayCast2D").set_deferred("monitoring", true)
+		var randomPositionChange
+		randomize()
+		if randf() < 0.25:
+			randomPositionChange = Vector2(rand_range(-100,-60), rand_range(-100,-60))
+		elif randf() < 0.5:
+			randomPositionChange = Vector2(rand_range(-100,-60), rand_range(60,100))
+		elif randf() < 0.75:
+			randomPositionChange = Vector2(rand_range(60,100), rand_range(-100,-60))
+		elif randf() < 1:
+			randomPositionChange = Vector2(rand_range(60,100), rand_range(60,100))
+		new_path = self.get_parent().get_parent().get_simple_path(self.global_position, self.global_position+2*randomPositionChange, true)
+	$Line2D.points = new_path
+	self.path = new_path 
 
 func _ready():
 	currentActionState = actionState.SEARCH
@@ -96,63 +112,26 @@ func _ready():
 	prevPosition = self.global_position
 
 func _physics_process(delta):
+
 	if currentActionState == actionState.TALKING:
 		$Polygon2D.modulate = Color(1, 1, 1)
 		pass
 	elif currentActionState == actionState.PATHFINDING:
-		$Polygon2D.modulate = Color(1, 0, 0)
-		if self.global_transform.origin.distance_to(self.prevPosition) < 1:
-			#velocity = (self.global_transform.origin-Vector2(rand_range(-100, 100), rand_range(-100, 100))).normalized()
-			if detectUpDownLeftRight == [true, true, true, true]:
-				velocity = Vector2(rand_range(-1,1), rand_range(-1,1))
-			elif detectUpDownLeftRight[0] and detectUpDownLeftRight[1]:
-				velocity = Vector2(0, rand_range(-1,1))
-			elif detectUpDownLeftRight[2] and detectUpDownLeftRight[3]:
-				velocity = Vector2(rand_range(-1,1), 0) 
-			else:
-				if detectUpDownLeftRight[0]:
-					velocity += Vector2(0, 0.1)
-				if detectUpDownLeftRight[1]:
-					velocity += Vector2(0, -0.1)
-				if detectUpDownLeftRight[2]:
-					velocity += Vector2(0.1, 0)
-				if detectUpDownLeftRight[3]:
-					velocity += Vector2(-0.1, 0)
-			self.move_and_slide(velocity * delta * speed)
-		else:
-			move_along_path(navSpeed*delta)
-	elif currentActionState == actionState.SLEEP:
-		pass
+		move_along_path(navSpeed*delta)
+		if self.global_position.distance_to(self.prevPosition) < 3:
+			#print("PATHFINDING TO SEARCH")
+			currentActionState = actionState.SEARCH
+			moveNPC()
 	elif currentActionState == actionState.SEARCH:
-		$Polygon2D.modulate = Color(0, 1, 0)
-		if detectUpDownLeftRight == [true, true, true, true]:
-			velocity = Vector2(rand_range(-1,1), rand_range(-1,1))
-		else:
-			if detectUpDownLeftRight[0]:
-				velocity += Vector2(0, 0.1)
-			if detectUpDownLeftRight[1]:
-				velocity += Vector2(0, -0.1)
-			if detectUpDownLeftRight[2]:
-				velocity += Vector2(0.1, 0)
-			if detectUpDownLeftRight[3]:
-				velocity += Vector2(-0.1, 0)
-		self.move_and_collide(velocity * delta * speed)
-	elif currentActionState == actionState.MOVING:
-		pass
-#		if justDetectedWall == true:
-#			pass
-##			velocity = velocity.rotated(180)
-##			rotation_degrees += 180
-#		else:
-#			velocity = velocity.rotated(tempRotation)
-#			rotation_degrees += tempRotation
-		self.move_and_collide(velocity * delta * speed)
-#		if justChangedDirection == true:
-#			velocity = (currentTarget-self.global_transform.origin).normalized()
+		move_along_path(navSpeed*delta)
+		if self.global_position.distance_to(self.prevPosition) < 3:
+			#print("SEARCH TO NEW SEARCH")
+			moveNPC()
 	elif currentActionState == actionState.ATTACK:
 		pass
 	elif currentActionState == actionState.LOCKEDON:
-		$Polygon2D.modulate = Color(0, 0, 0)
+		$Polygon2D.modulate = Color(0, 0, 1)
+
 
 
 #pick up item, receive player interfacesignal and convos
@@ -161,8 +140,8 @@ func _on_Area2D_area_entered(area):
 	if area.is_in_group("resource"):
 		print('OBTAINED RESOURCE')
 		if ownerOfReceivedSignal.get_name() == "Fuel":
-			get_node("BigSensoryRayCast2D").set_deferred("monitoring", true)
-			self.currentActionState = actionState.SEARCH
+			currentActionState = actionState.SEARCH
+			moveNPC()
 			ownerOfReceivedSignal.queue_free()
 	elif area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("player"):
 		print("CONVO RECEIVED BY NPC")
@@ -282,14 +261,14 @@ func calculateBehavior():
 	calculateDesperation()
 
 #pathfinding
-func _on_SensoryRayCast2D_body_entered(body):
-	if body.is_in_group("player"):
-		if body.currentPlayerState != body.possiblePlayerStates.TALKING:
-			currentTarget = body
-			print(self.get_parent().get_name())
-			print("player within NPCs attack range")
-			self.get_parent().moveNPC(self)
-			self.currentActionState = self.actionState.PATHFINDING
+#func _on_SensoryRayCast2D_body_entered(body):
+#	if body.is_in_group("player"):
+#		if body.currentPlayerState != body.possiblePlayerStates.TALKING:
+#			currentTarget = body
+#			print(self.get_parent().get_name())
+#			print("player within NPCs attack range")
+#			self.get_parent().moveNPC(self)
+#			self.currentActionState = self.actionState.PATHFINDING
 
 static func sum_array(array):
 	var sum = 0.0
@@ -332,30 +311,55 @@ func _on_LookRightArea_body_entered(body):
 func _on_LookUpArea_body_exited(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[0] = false
+	if body.is_in_group("player"):
+		body.NPCsThatAreInterestedInThisPlayer -= 1
+		currentActionState = actionState.SEARCH
 
 func _on_LookDownArea_body_exited(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[1] = false
+	if body.is_in_group("player"):
+		body.NPCsThatAreInterestedInThisPlayer -= 1
+		currentActionState = actionState.SEARCH
 
 func _on_LookLeftArea_body_exited(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[2] = false
+	if body.is_in_group("player"):
+		body.NPCsThatAreInterestedInThisPlayer -= 1
+		currentActionState = actionState.SEARCH
 
 func _on_LookRightArea_body_exited(body):
 	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
 		detectUpDownLeftRight[3] = false
+	if body.is_in_group("player"):
+		body.NPCsThatAreInterestedInThisPlayer -= 1
+		currentActionState = actionState.SEARCH
 
-
-#resource locating
+#resource and player detection
 func _on_BigSensoryRayCast2D_area_entered(area):
-	var ownerOfReceivedSignal
+	var ownerOfReceivedSignal = area.get_parent()
 	if area.is_in_group("resource"):
-		self.currentTarget = area
-		ownerOfReceivedSignal = area.get_parent().get_parent()
-		ownerOfReceivedSignal.moveNPC(self)
-		#print("FOUND RESOURCE")
-		get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
-		self.currentActionState = self.actionState.PATHFINDING
+		currentTarget = area
+		print("FOUND RESOURCE")
+		currentActionState = actionState.PATHFINDING
+		moveNPC()
+	if area.is_in_group("player"):
+		if str(currentTarget) != "[Deleted Object]":
+			print(ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer)
+			print(currentTarget.get_name())
+			print(ownerOfReceivedSignal.get_name())
+			ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer += 1
+			print("FOUND PLAYER")
+			currentTarget = ownerOfReceivedSignal
+			currentActionState = actionState.PATHFINDING
+			moveNPC()
+#			if ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer < 5:
+#				ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer += 1
+#				print("FOUND PLAYER")
+#				currentTarget = ownerOfReceivedSignal
+#				currentActionState = actionState.PATHFINDING
+#				moveNPC()
 
 func _on_Area2D_input_event(viewport, event, shape_idx):
 	if str(self.currentTarget) == "[Deleted Object]":
@@ -368,28 +372,40 @@ func _on_Area2D_input_event(viewport, event, shape_idx):
 		print("SEARCH")
 	if currentActionState == actionState.TALKING:
 		print("TALKING")
+	if currentActionState == actionState.MOVING:
+		print("MOVING")
+	if currentActionState == actionState.ATTACK:
+		print("ATTACK")
+	if currentActionState == actionState.LOCKEDON:
+		print("LOCKEDON")
+	if currentActionState == actionState.SLEEP:
+		print("SLEEP")
 	print("THIS NPC's detectUpDownLeftRight: ")
 	print(detectUpDownLeftRight)
 	print("THIS NPC'S velocity: " + str(self.velocity))
 	print("DIFFERENCE BETWEEN LAST AND CURRENT POSITION: " + str(self.global_transform.origin.distance_to(self.prevPosition)))
 
 #player detection
-func _on_BigSensoryRayCast2D_body_entered(body):
-	#print(body.get_name())
-	if body.is_in_group("player"):
-		if body.NPCsThatAreInterestedInThisPlayer < 5:
-			body.NPCsThatAreInterestedInThisPlayer += 1
-			print("FOUND PLAYER")
-			currentTarget = body
-			get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
-			self.currentActionState = actionState.PATHFINDING
+#func _on_BigSensoryRayCast2D_body_entered(body):
+#	#print(body.get_name())
+#	if body.is_in_group("player"):
+#		print(body.NPCsThatAreInterestedInThisPlayer)
+#		if body.NPCsThatAreInterestedInThisPlayer < 5:
+#			body.NPCsThatAreInterestedInThisPlayer += 1
+#			print("FOUND PLAYER")
+#			currentTarget = body
+#			get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
+#			self.currentActionState = actionState.PATHFINDING
 		
 
 func _on_Timer_timeout():
-	if self.currentActionState != actionState.TALKING:
+	if currentActionState != actionState.TALKING:
 		if str(self.currentTarget) == "[Deleted Object]":
 			self.currentTarget = self
 			#velocity = (currentTarget.global_transform.origin-self.global_transform.origin).normalized()
+		initRandRot = rand_range(0,360)
+		$Tween.interpolate_property($BigSensoryRayCast2D, "rotation_degrees", initRandRot, initRandRot+360, 2, Tween.TRANS_CUBIC, Tween.EASE_OUT)
+		$Tween.start()
 	else:
 		pass
 	prevPosition = self.global_transform.origin
@@ -405,10 +421,3 @@ func NPCexitTalkSession(newActionState):
 	get_node("BigSensoryRayCast2D").set_deferred("monitoring", true)
 	$ConvoScene.visible = false
 	self.currentActionState = newActionState
-
-
-
-#		if justFound == false:
-#			initRandRot = rand_range(0,360)
-#			$Tween.interpolate_property($BigSensoryRayCast2D, "rotation_degrees", initRandRot, initRandRot+360, 2, Tween.TRANS_CUBIC, Tween.EASE_OUT)
-#			$Tween.start()
