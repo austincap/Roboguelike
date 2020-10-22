@@ -5,7 +5,7 @@ var rubberScene = preload("res://Resources/Rubber.tscn")
 var metalScene = preload("res://Resources/Metal.tscn")
 var carbonScene = preload("res://Resources/Carbon.tscn")
 var crystalScene = preload("res://Resources/Crystal.tscn")
-
+var playerScene = preload("res://Player/Player.tscn")
 var characterScene = preload("res://Characters/NPC.tscn")
 #var hackerScene = load("res://Characters/Hacker.tscn")
 #var slinkerScene = load("res://Characters/Slinker.tscn")
@@ -30,9 +30,10 @@ var chunkArray = [
 var elementsChecked = false
 var NPCArray = []
 var entranceArray = []
-
-var NPCLikelihood = 0.1
-var resourceLikelihood = 0.8
+var resourceArray = []
+var tempArray = []
+var NPCLikelihood = 0.3
+var resourceLikelihood = 0.5
 var hazardLikelihood = 0.2
 
 func getRandomNumber(num):
@@ -133,15 +134,36 @@ func _ready():
 #				for i in int(getRandomNumber(3)):
 #					element = hazardScene.instance()
 #					tryToRandomlyPlaceElement(element, chunk)
-	#$Camera2D.make_current()
+
+#		#add player
+#		if (y_chunk+1)*(y_chunk+1) == y_chunks*x_chunks:
+#			print("test")
+#			var playerNode = playerScene.instance()
+#			chunk.add_child(playerNode)
+#			#chunk.print_tree_pretty()
+#			print(playerNode.get_parent().print_tree_pretty())
+#			randomize()
+#			playerNode.position = Vector2(rand_range(0,100), rand_range(0,170))
+			self.get_node("Navigation2D").navpoly_add(chunk.get_node("Navigation2D/UnderTileMap").get_tileset().tile_get_navigation_polygon(0))
+	$Camera2D.make_current()
 
 func checkNPCs():
 	for element in NPCArray:
-		print(element)
 		if is_instance_valid(element) and element.is_in_group("NPC"):
-			if element.global_transform.origin.distance_to(element.prevPosition) < 3: #how far it has to be to justify culling
+			if element.global_transform.origin.distance_to(element.prevPosition) < 2: #how far it has to be to justify culling
 				element.queue_free()
 	elementsChecked = true
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+	if event.button_index != BUTTON_LEFT or not event.pressed:
+		return
+	print(self.print_tree_pretty())
+	print($PlayerNode.get_name())
+	var new_path = $Node2D/Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
+	$Node2D/Line2D.points = new_path
+	$PlayerNode.path = new_path
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):
@@ -159,7 +181,7 @@ func tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn):
 	#print(elementToPlace.get_child(0).get_overlapping_bodies())
 	if elementToPlace.get_child(0).get_overlapping_bodies().size() > 0:
 	#if elementToPlace.get_child(0).overlaps_area(chunkToPlaceIn.get_child(0)):
-		#print('overlap')
+		print('overlap')
 		tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn)
 	else:
 		if str(elementToPlace) == "[Deleted Object]":

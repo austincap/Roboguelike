@@ -37,7 +37,7 @@ var xAxisRL = Input.get_joy_axis(0, JOY_AXIS_2)
 var yAxisUD = Input.get_joy_axis(0 ,JOY_AXIS_3)
 var prevTalkDamageReceived = 0
 var signalSpeed = 200
-
+var NPCsThatAreInterestedInThisPlayer = 0
 
 
 var speed := 300.0
@@ -69,7 +69,7 @@ func move_along_path(distance: float) -> void:
 
 
 func _ready():
-	#set_physics_process(false)
+	set_physics_process(false)
 	set_process(false)
 	$Camera2D.make_current()
 	var test = equipmentSlot[currentEquipmentIndex].instance()
@@ -90,7 +90,7 @@ func _physics_process(delta):
 			$EquippedItemNode.rotation_degrees = rad2deg(controllerangle)
 			$InterfaceSignal.position = signalSpeed*getShotVelocityVector()
 		self.position += 200*delta*getLeftStickVector()
-		if currentPlayerState == possiblePlayerStates.LOCKEDON:
+		if currentPlayerState == possiblePlayerStates.LOCKEDON and str(currentTarget) != "[Deleted Object]":
 			$InterfaceSignal.global_position = currentTarget.global_position
 			if Input.is_action_pressed("interface"):
 				initiateTalkSession(currentTarget)
