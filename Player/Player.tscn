@@ -104,6 +104,7 @@ visible = false
 polygon = PoolVector2Array( 43.2906, 22.4888, -0.800323, 32.4192, -51.6438, 2.62805, -1.99196, -33.1213, 44.085, -12.0689 )
 
 [node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2( 0.5, 0.5 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource( 2 )
@@ -162,6 +163,7 @@ frame = 1
 autostart = true
 
 [node name="Line2D" type="Line2D" parent="."]
+visible = false
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]
 [connection signal="timeout" from="SkillReturnTimer" to="." method="_on_SkillReturnTimer_timeout"]
 [connection signal="body_entered" from="InterfaceSignal" to="." method="_on_InterfaceSignal_body_entered"]

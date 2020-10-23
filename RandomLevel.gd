@@ -15,7 +15,7 @@ var characterScene = preload("res://Characters/NPC.tscn")
 
 #var hazardScene = load("res://LevelElements/Hazard.tscn")
 
-var size_of_each_chunk = 1152
+var size_of_each_chunk = 576
 var x_chunks = 6
 var y_chunks = 6
 var chunkArray = [
@@ -86,10 +86,10 @@ func _ready():
 			chunkIdToGet = northConnection+eastConnection+southConnection+westConnection
 			chunkArray[y_chunk][x_chunk] = chunkIdToGet
 			#scene = load("res://LevelGen/"+chunkIdToGet+".tscn")
-			scene = load("res://LevelGen-alt/"+chunkIdToGet+".tscn")
+			scene = load("res://LevelGen-alt-nav/"+chunkIdToGet+".tscn")
 			chunk = scene.instance()
 			chunk.global_position = Vector2(size_of_each_chunk*x_chunk, size_of_each_chunk*y_chunk)
-			add_child(chunk)
+			$Navigation2D.add_child(chunk)
 			#add level elements to chunk
 			#add tunnels
 			if (int(northConnection)+int(eastConnection)+int(southConnection)+int(westConnection)) >= 7:
@@ -144,8 +144,8 @@ func _ready():
 #			print(playerNode.get_parent().print_tree_pretty())
 #			randomize()
 #			playerNode.position = Vector2(rand_range(0,100), rand_range(0,170))
-			self.get_node("Navigation2D").navpoly_add(chunk.get_node("Navigation2D/UnderTileMap").get_tileset().tile_get_navigation_polygon(0))
-	$Camera2D.make_current()
+			#self.get_node("Navigation2D").navpoly_add(chunk.get_node("Navigation2D/UnderTileMap").get_tileset().tile_get_navigation_polygon(0))
+	#$Camera2D.make_current()
 
 func checkNPCs():
 	for element in NPCArray:
@@ -159,10 +159,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.button_index != BUTTON_LEFT or not event.pressed:
 		return
-	print(self.print_tree_pretty())
-	print($PlayerNode.get_name())
-	var new_path = $Node2D/Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
-	$Node2D/Line2D.points = new_path
+	#print(self.print_tree_pretty())
+	#print($PlayerNode.get_name())
+	#var new_path = $Node2D/Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
+	var new_path = $Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
+	$PlayerNode/Line2D.points = new_path
 	$PlayerNode.path = new_path
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

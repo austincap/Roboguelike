@@ -118,7 +118,7 @@ func _physics_process(delta):
 		pass
 	elif currentActionState == actionState.PATHFINDING:
 		move_along_path(navSpeed*delta)
-		if self.global_position.distance_to(self.prevPosition) < 3:
+		if self.global_position.distance_to(self.prevPosition) < 5:
 			#print("PATHFINDING TO SEARCH")
 			currentActionState = actionState.SEARCH
 			moveNPC()

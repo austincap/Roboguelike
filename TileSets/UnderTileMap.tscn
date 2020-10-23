@@ -5,7 +5,6 @@
 [node name="UnderTileMap" type="TileMap" groups=[
 "tilemap",
 ]]
-scale = Vector2( 2, 2 )
 tile_set = ExtResource( 1 )
 cell_size = Vector2( 32, 32 )
 cell_custom_transform = Transform2D( 32, 0, 0, 32, 0, 0 )
