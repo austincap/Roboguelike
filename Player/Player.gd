@@ -69,7 +69,7 @@ func move_along_path(distance: float) -> void:
 
 
 func _ready():
-	set_physics_process(false)
+	set_physics_process(true)
 	set_process(false)
 	$Camera2D.make_current()
 	var test = equipmentSlot[currentEquipmentIndex].instance()
@@ -294,18 +294,27 @@ func _on_SkillReturnTimer_timeout():
 
 #receive interface signals and convo bubbles
 func _on_Area2D_area_entered(area):
-	print(area.get_name())
-	print('testete')
 	var ownerOfReceivedSignal = area.get_parent()
-	print(ownerOfReceivedSignal.get_name())
+	#print(area.get_name())
+	#print(ownerOfReceivedSignal.get_name())
 	if ownerOfReceivedSignal.is_in_group("player") == false:
 		if area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("NPC"):
 			self.prevTalkDamageReceived = handleConvoBubble(self, ownerOfReceivedSignal)
 			reactionToNPCConvoBubble(ownerOfReceivedSignal)
+		elif area.is_in_group("portal"):
+			var portalIndex = self.get_parent().portalArray.find(area.global_position)
+			if portalIndex+1 >= self.get_parent().portalArray.size():
+				self.global_position = self.get_parent().portalArray[0]+Vector2(0,40)
+			else:
+				self.global_position = self.get_parent().portalArray[portalIndex+1]+Vector2(0,40)
+				
+		elif area.is_in_group("resource"):
+			print('OBTAINED RESOURCE')
+			if ownerOfReceivedSignal.get_name() == "Fuel":
+				resourceStats[2] += rand_range(10,90)
+			ownerOfReceivedSignal.queue_free()
 		else: #if interfacesignal from NPC
 			react(3)
-			#interfaceRequest = true
-			#currentTarget = ownerOfReceivedSignal
 
 
 func reactionToNPCConvoBubble(NPCnode):

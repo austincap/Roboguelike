@@ -1,0 +1,163 @@
+[gd_scene format=2]
+
+[node name="StatDisplay" type="Node2D"]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Personality" type="HBoxContainer" parent="VBoxContainer"]
+margin_right = 56.0
+margin_bottom = 14.0
+
+[node name="Aggressiveness" type="Label" parent="VBoxContainer/Personality"]
+margin_right = 8.0
+margin_bottom = 14.0
+text = "X"
+
+[node name="Openness" type="Label" parent="VBoxContainer/Personality"]
+margin_left = 12.0
+margin_right = 20.0
+margin_bottom = 14.0
+text = "X"
+
+[node name="Erraticness" type="Label" parent="VBoxContainer/Personality"]
+margin_left = 24.0
+margin_right = 32.0
+margin_bottom = 14.0
+text = "X"
+
+[node name="Selfishness" type="Label" parent="VBoxContainer/Personality"]
+margin_left = 36.0
+margin_right = 44.0
+margin_bottom = 14.0
+text = "X"
+
+[node name="Confidence" type="Label" parent="VBoxContainer/Personality"]
+margin_left = 48.0
+margin_right = 56.0
+margin_bottom = 14.0
+text = "X"
+
+[node name="Stats" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 18.0
+margin_right = 56.0
+margin_bottom = 32.0
+
+[node name="Charisma" type="Label" parent="VBoxContainer/Stats"]
+margin_right = 24.0
+margin_bottom = 14.0
+text = "333"
+
+[node name="Intelligence" type="Label" parent="VBoxContainer/Stats"]
+margin_left = 28.0
+margin_right = 28.0
+margin_bottom = 14.0
+
+[node name="Offense" type="Label" parent="VBoxContainer/Stats"]
+margin_left = 32.0
+margin_right = 32.0
+margin_bottom = 14.0
+
+[node name="Defense" type="Label" parent="VBoxContainer/Stats"]
+margin_left = 36.0
+margin_right = 36.0
+margin_bottom = 14.0
+
+[node name="Speed" type="Label" parent="VBoxContainer/Stats"]
+margin_left = 40.0
+margin_right = 40.0
+margin_bottom = 14.0
+
+[node name="Interests" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 36.0
+margin_right = 56.0
+margin_bottom = 50.0
+
+[node name="SmallTalk" type="Label" parent="VBoxContainer/Interests"]
+margin_right = 24.0
+margin_bottom = 14.0
+text = "333"
+
+[node name="You" type="Label" parent="VBoxContainer/Interests"]
+margin_left = 28.0
+margin_right = 28.0
+margin_bottom = 14.0
+
+[node name="Gossip" type="Label" parent="VBoxContainer/Interests"]
+margin_left = 32.0
+margin_right = 32.0
+margin_bottom = 14.0
+
+[node name="News" type="Label" parent="VBoxContainer/Interests"]
+margin_left = 36.0
+margin_right = 36.0
+margin_bottom = 14.0
+
+[node name="DeepTalk" type="Label" parent="VBoxContainer/Interests"]
+margin_left = 40.0
+margin_right = 40.0
+margin_bottom = 14.0
+
+[node name="Knowledge" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 54.0
+margin_right = 56.0
+margin_bottom = 68.0
+
+[node name="SmallTalk" type="Label" parent="VBoxContainer/Knowledge"]
+margin_right = 24.0
+margin_bottom = 14.0
+text = "333"
+
+[node name="You" type="Label" parent="VBoxContainer/Knowledge"]
+margin_left = 28.0
+margin_right = 28.0
+margin_bottom = 14.0
+
+[node name="Gossip" type="Label" parent="VBoxContainer/Knowledge"]
+margin_left = 32.0
+margin_right = 32.0
+margin_bottom = 14.0
+
+[node name="News" type="Label" parent="VBoxContainer/Knowledge"]
+margin_left = 36.0
+margin_right = 36.0
+margin_bottom = 14.0
+
+[node name="DeepTalk" type="Label" parent="VBoxContainer/Knowledge"]
+margin_left = 40.0
+margin_right = 40.0
+margin_bottom = 14.0
+
+[node name="ConsumptionRates" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 72.0
+margin_right = 56.0
+margin_bottom = 86.0
+
+[node name="Crystals" type="Label" parent="VBoxContainer/ConsumptionRates"]
+margin_right = 24.0
+margin_bottom = 14.0
+text = "333"
+
+[node name="Metal" type="Label" parent="VBoxContainer/ConsumptionRates"]
+margin_left = 28.0
+margin_right = 28.0
+margin_bottom = 14.0
+
+[node name="Fuel" type="Label" parent="VBoxContainer/ConsumptionRates"]
+margin_left = 32.0
+margin_right = 32.0
+margin_bottom = 14.0
+
+[node name="CarbonFiber" type="Label" parent="VBoxContainer/ConsumptionRates"]
+margin_left = 36.0
+margin_right = 36.0
+margin_bottom = 14.0
+
+[node name="Rubber" type="Label" parent="VBoxContainer/ConsumptionRates"]
+margin_left = 40.0
+margin_right = 40.0
+margin_bottom = 14.0

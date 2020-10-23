@@ -11,7 +11,7 @@ var lilStats = [0.2, 0.1, 0.5, 0.4, 0.2] #[charisma, intelligence, attack, defen
 var bigStats = [30, 40] #[social_stamina, maximum HP]
 var consumptionRates = [0.0, 0.3, 0.5, 0.2, 0] #[crystals, metal, fuel, carbon fiber, rubber] #subtract every timestep from corresponding resource
 #FLUCTUATING STATS
-var fluctStats = [0, 0.5, 0, 40] #[talkDamage given, desperation currently having, personal affinity with player, current HP]
+var fluctStats = [0, 0.5, 0, 40, 0, 0, 0] #[talkDamage given, desperation currently having, personal affinity with player, current HP, personal affinity with any NPC convo partner, courage, loneliness]
 var prevTalkDamageReceived = 0
 var NPCprevTopicId = 0
 var NPCprevRhetoricId = 0
@@ -29,25 +29,21 @@ var currentTempState = tempState.RELAXED
 #ACTION STATES
 enum actionState{TALKING, SLEEP, SEARCH, MOVING, ATTACK, LOCKEDON, PATHFINDING}
 var currentActionState = actionState.SEARCH
-var justChangedState = false
-var justChangedDirection = false
+#GOAL STATES
+enum goalState{CRYSTALS, METAL, FUEL, CARBON, RUBBER, HEAL, SOCIALIZATION, REST, MISSION, REPRODUCTION, STRENGTHEN, NOTHING}
+var currentGoalState = goalState.NOTHING
 var initRandRot = 0
-var justFound = false
-var justDetectedWall = false
 
 var receivedTalkDamage = 0
-var directionVector = Vector2(0,0)
 var rotation_dir = 0
-var sensoryVector
 var tempRotation = 0
 var velocity = Vector2(0,0)
 var speed = 50
-var maxSpeed = 70
 var prevPosition
 var detectUpDownLeftRight = [false, false, false, false]
 
 
-var navSpeed := 300.0
+var navSpeed := 100.0
 var path := PoolVector2Array() setget set_path
 
 func set_path(value: PoolVector2Array) -> void:
@@ -67,10 +63,6 @@ func move_along_path(distance: float) -> void:
 			else:
 				#velocity = (currentTarget.global_position-self.global_transform.origin).normalized()
 				global_position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
-				#if abs(velocity.x) < 0.1 or abs(velocity.y) < 0.1:
-					#print(velocity.x*velocity.x+velocity.y*velocity.y)
-					#start_point += Vector2(rand_range(-5, 5), rand_range(-5, 5))
-					#position = start_point.linear_interpolate(path[0], distance/(distance_to_next)) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
 				break
 		elif distance < 0.0:
 			global_position = path[0]
@@ -112,7 +104,6 @@ func _ready():
 	prevPosition = self.global_position
 
 func _physics_process(delta):
-
 	if currentActionState == actionState.TALKING:
 		$Polygon2D.modulate = Color(1, 1, 1)
 		pass
@@ -140,6 +131,7 @@ func _on_Area2D_area_entered(area):
 	if area.is_in_group("resource"):
 		print('OBTAINED RESOURCE')
 		if ownerOfReceivedSignal.get_name() == "Fuel":
+			resourceStats[2] += rand_range(10,90)
 			currentActionState = actionState.SEARCH
 			moveNPC()
 			ownerOfReceivedSignal.queue_free()
@@ -177,7 +169,7 @@ func NPCreactionToConvoBubble(playerNode):
 func calculateAttackDecision(playerNode):
 	var attackOrNot = ((personality[0]+personality[3]*rand_range(-0.3,0.3)+personality[4])+(racismArray[0]+fluctStats[2])*lilStats[3])*2+fluctStats[1]
 	print("attackOrNot "+str(attackOrNot))
-	if currentTempState == tempState.HOSTILE:
+	if currentTempState == tempState.HOSTILE or currentGoalState == goalState.STRENGTHEN:
 		if attackOrNot > 2:
 			NPCexitTalkSession(actionState.ATTACK)
 		else:
@@ -203,7 +195,7 @@ func calculateTalkDecision(playerNode):
 		else:
 			playerNode.NPCsThatAreInterestedInThisPlayer -= 1
 			NPCexitTalkSession(actionState.SEARCH)
-	elif currentTempState == tempState.WARY:
+	elif currentTempState == tempState.WARY or currentGoalState == goalState.MISSION:
 		if talkOrNot > 4:
 			calculateWhatToTalkAbout()
 		else:
@@ -257,8 +249,20 @@ func calculateDesperation():
 	var dmgPercent = 1-fluctStats[3]/bigStats[1]
 	fluctStats[1] = (dmgPercent+fluctStats[1]+personality[3])/(lilStats[4]+lilStats[2]+personality[4])
 
-func calculateBehavior():
+func goalAssignment():
 	calculateDesperation()
+	#get all fluctuating stats out of critical level
+	for i in range(4):
+		if resourceStats[i] < 10:
+			currentGoalState = i
+			return
+	if fluctStats[3]/bigStats[0] < 0.4: #dmg percent
+		currentGoalState = goalState.HEAL
+		return
+	if fluctStats[6] > 0.4: #loneliness
+		currentGoalState = goalState.SOCIALIZATION
+	#start executing missions
+	
 
 #pathfinding
 #func _on_SensoryRayCast2D_body_entered(body):
@@ -340,15 +344,17 @@ func _on_LookRightArea_body_exited(body):
 func _on_BigSensoryRayCast2D_area_entered(area):
 	var ownerOfReceivedSignal = area.get_parent()
 	if area.is_in_group("resource"):
+		#PUT GOAL STATE STUFF HERE
+		#
 		currentTarget = area
-		print("FOUND RESOURCE")
+		#print("FOUND RESOURCE")
 		currentActionState = actionState.PATHFINDING
 		moveNPC()
 	if area.is_in_group("player"):
 		if str(currentTarget) != "[Deleted Object]":
-			print(ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer)
-			print(currentTarget.get_name())
-			print(ownerOfReceivedSignal.get_name())
+#			print(ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer)
+#			print(currentTarget.get_name())
+#			print(ownerOfReceivedSignal.get_name())
 			ownerOfReceivedSignal.NPCsThatAreInterestedInThisPlayer += 1
 			print("FOUND PLAYER")
 			currentTarget = ownerOfReceivedSignal
@@ -385,19 +391,6 @@ func _on_Area2D_input_event(viewport, event, shape_idx):
 	print("THIS NPC'S velocity: " + str(self.velocity))
 	print("DIFFERENCE BETWEEN LAST AND CURRENT POSITION: " + str(self.global_transform.origin.distance_to(self.prevPosition)))
 
-#player detection
-#func _on_BigSensoryRayCast2D_body_entered(body):
-#	#print(body.get_name())
-#	if body.is_in_group("player"):
-#		print(body.NPCsThatAreInterestedInThisPlayer)
-#		if body.NPCsThatAreInterestedInThisPlayer < 5:
-#			body.NPCsThatAreInterestedInThisPlayer += 1
-#			print("FOUND PLAYER")
-#			currentTarget = body
-#			get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
-#			self.currentActionState = actionState.PATHFINDING
-		
-
 func _on_Timer_timeout():
 	if currentActionState != actionState.TALKING:
 		if str(self.currentTarget) == "[Deleted Object]":
@@ -409,6 +402,8 @@ func _on_Timer_timeout():
 	else:
 		pass
 	prevPosition = self.global_transform.origin
+	for i in range(5):
+		resourceStats[i] -= consumptionRates[i]
 
 func react(reactionId):
 	$Reactions.get_child(reactionId).visible = true

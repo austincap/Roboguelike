@@ -5,7 +5,7 @@ var rubberScene = preload("res://Resources/Rubber.tscn")
 var metalScene = preload("res://Resources/Metal.tscn")
 var carbonScene = preload("res://Resources/Carbon.tscn")
 var crystalScene = preload("res://Resources/Crystal.tscn")
-var playerScene = preload("res://Player/Player.tscn")
+#var playerScene = preload("res://Player/Player.tscn")
 var characterScene = preload("res://Characters/NPC.tscn")
 #var hackerScene = load("res://Characters/Hacker.tscn")
 #var slinkerScene = load("res://Characters/Slinker.tscn")
@@ -29,7 +29,7 @@ var chunkArray = [
 
 var elementsChecked = false
 var NPCArray = []
-var entranceArray = []
+var portalArray = []
 var resourceArray = []
 var tempArray = []
 var NPCLikelihood = 0.3
@@ -89,19 +89,29 @@ func _ready():
 			scene = load("res://LevelGen-alt-nav/"+chunkIdToGet+".tscn")
 			chunk = scene.instance()
 			chunk.global_position = Vector2(size_of_each_chunk*x_chunk, size_of_each_chunk*y_chunk)
-			$Navigation2D.add_child(chunk)
+			$Navigation2D.add_child(chunk) #actually a NavigationPolygonInstance that I named wrong
 			#add level elements to chunk
 			#add tunnels
 			if (int(northConnection)+int(eastConnection)+int(southConnection)+int(westConnection)) >= 7:
 				scene = load("res://LevelElements/SewerEntrance.tscn")
 				element = scene.instance()
 				tryToRandomlyPlaceElement(element, chunk)
-				entranceArray.append([isolatedchunkCount, element])
+				portalArray.append(element.global_position) #probably need a smarter way of tracking this if I stay with portals
 				isolatedchunkCount += 1
 			#add resources and items
 			randomize()
 			if rand_range(0.0, 1.0) < resourceLikelihood:
-				element = fuelScene.instance()
+				var resourceType = getRandomNumber(4)
+				if resourceType == "0":
+					element = crystalScene.instance()
+				elif resourceType == "1":
+					element = metalScene.instance()
+				elif resourceType == "2":
+					element = fuelScene.instance()
+				elif resourceType == "3":
+					element = carbonScene.instance()
+				elif resourceType == "4":
+					element = rubberScene.instance()
 				tryToRandomlyPlaceElement(element, chunk)
 			#add NPCs
 			randomize()
@@ -125,7 +135,7 @@ func _ready():
 #					for i in int(getRandomNumber(3)):
 #						element = scrapperScene.instance()
 #						tryToRandomlyPlaceElement(element, chunk)
-				for i in int(getRandomNumber(3)):
+				for i in int(getRandomNumber(1)):
 					element = characterScene.instance()
 					tryToRandomlyPlaceElement(element, chunk)
 			#add hazards and flavor objects
@@ -134,17 +144,6 @@ func _ready():
 #				for i in int(getRandomNumber(3)):
 #					element = hazardScene.instance()
 #					tryToRandomlyPlaceElement(element, chunk)
-
-#		#add player
-#		if (y_chunk+1)*(y_chunk+1) == y_chunks*x_chunks:
-#			print("test")
-#			var playerNode = playerScene.instance()
-#			chunk.add_child(playerNode)
-#			#chunk.print_tree_pretty()
-#			print(playerNode.get_parent().print_tree_pretty())
-#			randomize()
-#			playerNode.position = Vector2(rand_range(0,100), rand_range(0,170))
-			#self.get_node("Navigation2D").navpoly_add(chunk.get_node("Navigation2D/UnderTileMap").get_tileset().tile_get_navigation_polygon(0))
 	#$Camera2D.make_current()
 
 func checkNPCs():
@@ -159,9 +158,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.button_index != BUTTON_LEFT or not event.pressed:
 		return
-	#print(self.print_tree_pretty())
-	#print($PlayerNode.get_name())
-	#var new_path = $Node2D/Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
 	var new_path = $Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
 	$PlayerNode/Line2D.points = new_path
 	$PlayerNode.path = new_path
