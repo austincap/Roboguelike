@@ -23,9 +23,10 @@ flag_disable_z = true
 direction = Vector3( 0, 0, 0 )
 spread = 1.0
 gravity = Vector3( 0, 0, 0 )
-initial_velocity = 150.0
+initial_velocity = 190.0
 orbit_velocity = 1.8
 orbit_velocity_random = 0.0
+damping = 0.56
 
 [sub_resource type="Animation" id=5]
 resource_name = "React"
@@ -56,30 +57,6 @@ tracks/1/keys = {
 
 [sub_resource type="Animation" id=6]
 resource_name = "returnConvoNode"
-tracks/0/type = "value"
-tracks/0/path = NodePath("ConvoScene:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/keys = {
-"times": PoolRealArray( 0, 1 ),
-"transitions": PoolRealArray( 1, 1 ),
-"update": 0,
-"values": [ Vector2( 1, 1 ), Vector2( 0.1, 0.1 ) ]
-}
-tracks/1/type = "value"
-tracks/1/path = NodePath("ConvoScene:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/keys = {
-"times": PoolRealArray( 0, 1 ),
-"transitions": PoolRealArray( 1, 1 ),
-"update": 0,
-"values": [ Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0.00392157 ) ]
-}
 
 [node name="PlayerNode" type="KinematicBody2D" groups=[
 "player",
@@ -104,6 +81,7 @@ visible = false
 polygon = PoolVector2Array( 43.2906, 22.4888, -0.800323, 32.4192, -51.6438, 2.62805, -1.99196, -33.1213, 44.085, -12.0689 )
 
 [node name="Camera2D" type="Camera2D" parent="."]
+scale = Vector2( 2, 2 )
 zoom = Vector2( 0.5, 0.5 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -114,14 +92,6 @@ shape = SubResource( 2 )
 [node name="SkillReturnTimer" type="Timer" parent="."]
 wait_time = 2.0
 one_shot = true
-
-[node name="ConvoScene" parent="." instance=ExtResource( 6 )]
-visible = false
-modulate = Color( 1, 1, 1, 1 )
-position = Vector2( 80, -70 )
-scale = Vector2( 1, 1 )
-monitoring = false
-monitorable = false
 
 [node name="InterfaceSignal" type="Area2D" parent="." groups=[
 "interfacesignal",
@@ -136,8 +106,10 @@ shape = SubResource( 3 )
 position = Vector2( 0.340546, 23.0956 )
 scale = Vector2( 2, 2 )
 amount = 5
+lifetime = 5.0
+preprocess = 3.0
 speed_scale = 0.5
-explosiveness = 0.5
+fixed_fps = 60
 process_material = SubResource( 4 )
 
 [node name="Reactions" parent="." instance=ExtResource( 7 )]
@@ -164,6 +136,22 @@ autostart = true
 
 [node name="Line2D" type="Line2D" parent="."]
 visible = false
+
+[node name="ConvoNode" parent="." instance=ExtResource( 6 )]
+visible = false
+position = Vector2( 40, -40 )
+monitoring = false
+monitorable = false
+
+[node name="Messages" type="Label" parent="."]
+visible = false
+margin_left = -70.0
+margin_top = -53.0
+margin_right = 14.0
+margin_bottom = -28.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]
 [connection signal="timeout" from="SkillReturnTimer" to="." method="_on_SkillReturnTimer_timeout"]
 [connection signal="body_entered" from="InterfaceSignal" to="." method="_on_InterfaceSignal_body_entered"]

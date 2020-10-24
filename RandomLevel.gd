@@ -52,6 +52,7 @@ func _ready():
 	var scene
 	var chunk
 	var element
+	var NPCid = 0
 	var chunkIdToGet = northConnection+eastConnection+southConnection+westConnection
 	for y_chunk in range(y_chunks):
 		for x_chunk in range(x_chunks):
@@ -137,6 +138,8 @@ func _ready():
 #						tryToRandomlyPlaceElement(element, chunk)
 				for i in int(getRandomNumber(1)):
 					element = characterScene.instance()
+					element.NPCid = NPCid
+					NPCid += 1
 					tryToRandomlyPlaceElement(element, chunk)
 			#add hazards and flavor objects
 #			randomize()
@@ -171,20 +174,25 @@ func _physics_process(delta):
 func tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn):
 	randomize()
 	elementToPlace.position = Vector2(rand_range(0,100), rand_range(0,170))
+	if str(elementToPlace) == "[Deleted Object]":
+		print(str(elementToPlace))
+	else:
+		chunkToPlaceIn.add_child(elementToPlace)
+		NPCArray.append(elementToPlace)
 	#chunkToPlaceIn.add_child(elementToPlace)
 	#elementToPlace.position = Vector2(rand_range(50,100), rand_range(50,170))
 	#print(chunkToPlaceIn.get_child(0))
 	#print(elementToPlace.get_child(0).get_name())
 	#print(elementToPlace.get_child(0).get_overlapping_bodies())
-	if elementToPlace.get_child(0).get_overlapping_bodies().size() > 0:
-	#if elementToPlace.get_child(0).overlaps_area(chunkToPlaceIn.get_child(0)):
-		print('overlap')
-		tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn)
-	else:
-		if str(elementToPlace) == "[Deleted Object]":
-			print(str(elementToPlace))
-		else:
-			chunkToPlaceIn.add_child(elementToPlace)
-			NPCArray.append(elementToPlace)
-		#print('no overlap')
-	#print("done")
+#	if elementToPlace.get_child(0).get_overlapping_bodies().size() > 0:
+#	#if elementToPlace.get_child(0).overlaps_area(chunkToPlaceIn.get_child(0)):
+#		print('overlap')
+#		tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn)
+#	else:
+#		if str(elementToPlace) == "[Deleted Object]":
+#			print(str(elementToPlace))
+#		else:
+#			chunkToPlaceIn.add_child(elementToPlace)
+#			NPCArray.append(elementToPlace)
+#		#print('no overlap')
+#	#print("done")

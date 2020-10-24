@@ -18,8 +18,6 @@ var resourceStats = [100, 30, 50, 20, 10] #[crystals, metal, fuel, carbon fiber,
 var lilStats = [0.2, 0.1, 0.5, 0.4, 0.2] #[charisma, intelligence, attack, defense, speed]
 var bigStats = [30, 40] #[social_stamina, maxHP]
 var consumptionRates = [0.0, 0.3, 0.5, 0.2, 0] #[crystals, metal, fuel, carbon fiber, rubber] #subtract every timestep from corresponding resource
-#FLUCTUATING STATS
-var fluctStats = [0, 0] #[talkDamage, desperation]
 var currentTarget = self
 #PERSONALITY TRAITS
 var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[general aggression, curiosity, erraticness, greed, grit]
@@ -40,7 +38,7 @@ var signalSpeed = 200
 var NPCsThatAreInterestedInThisPlayer = 0
 
 
-var speed := 300.0
+var speed := 200.0
 var path := PoolVector2Array() setget set_path
 
 func set_path(value: PoolVector2Array) -> void:
@@ -92,10 +90,12 @@ func _physics_process(delta):
 		self.position += 200*delta*getLeftStickVector()
 		if currentPlayerState == possiblePlayerStates.LOCKEDON and str(currentTarget) != "[Deleted Object]":
 			$InterfaceSignal.global_position = currentTarget.global_position
+			if !currentTarget.is_in_group("NPC"):
+				currentPlayerState == possiblePlayerStates.NORMAL
 			if Input.is_action_pressed("interface"):
 				initiateTalkSession(currentTarget)
 			else:
-				currentTarget.currentActionState = currentTarget.actionState.SEARCH
+				#currentTarget.currentActionState = currentTarget.actionState.SEARCH
 				currentPlayerState == possiblePlayerStates.NORMAL
 	move_and_collide(delta*getLeftStickVector())
 
@@ -145,29 +145,33 @@ func _input(event):
 		if event.is_action_pressed("leftmove"):
 			changeTopicOrRhetoric(2)
 		if event.is_action_released("rt"):
-			$ConvoScene.modulate = Color(1,1,1,1)
-			$SkillTween.interpolate_property($ConvoScene, "global_position", self.global_position+Vector2(80,-70), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+			$ConvoNode.modulate = Color(1,1,1,1)
+			$SkillTween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(80,-70), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 			$SkillTween.start()
 
 func initiateTalkSession(NPCnode):
 	currentPlayerState = possiblePlayerStates.TALKING
 	NPCnode.currentTarget = self
 	NPCnode.currentActionState = NPCnode.actionState.TALKING
-	get_node("ConvoScene").set_deferred("monitorable", true)
-	$ConvoScene.visible = true
-	NPCnode.get_node("ConvoScene").visible = true
-	NPCnode.get_node("ConvoScene").set_deferred("monitorable", true)
+	get_node("ConvoNode").set_deferred("monitorable", true)
+	self.set_deferred("monitorable", false)
+	NPCnode.set_deferred("monitorable", false)
+	$ConvoNode.visible = true
+	NPCnode.get_node("ConvoNode").visible = true
+	NPCnode.get_node("ConvoNode").set_deferred("monitorable", true)
 	$InterfaceSignal.global_position = currentTarget.global_position
 	$InterfaceSignal/Particles2D.process_material.initial_velocity = 300
-	print('talk session initiated')
+	print('-----------------talk session initiated')
 
 func exitTalkSession(NPCnode):
 	$InterfaceSignal.global_position = self.global_position
 	$InterfaceSignal/Particles2D.process_material.initial_velocity = 150
-	get_node("ConvoScene").set_deferred("monitorable", false)
-	$ConvoScene.visible = false
+	get_node("ConvoNode").set_deferred("monitorable", false)
+	self.set_deferred("monitorable", true)
+	$ConvoNode.visible = false
 	NPCnode.NPCexitTalkSession(NPCnode.actionState.SEARCH)
 	currentPlayerState = possiblePlayerStates.NORMAL
+	print('-----------------talk session ended')
 
 func handleConvoBubble(receiverNode, senderNode):
 	#topics are clamped between 0 and 2
@@ -238,31 +242,31 @@ func changeTopicOrRhetoric(choice):
 		prevRhetoricId = rhetoricId - 1
 	#0 up topic
 	if choice == 0:
-		$SkillTween.interpolate_property($ConvoScene/ConvoBubble/BubbleSprite/UpArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
+		$SkillTween.interpolate_property($ConvoNode/ConvoBubble/UpArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
 		$SkillTween.start()
-		$ConvoScene/ConvoBubble/Topic.get_child(topicId).visible = false
-		$ConvoScene/ConvoBubble/Topic.get_child(nextTopicId).visible = true
+		$ConvoNode/ConvoBubble/Topic.get_child(topicId).visible = false
+		$ConvoNode/ConvoBubble/Topic.get_child(nextTopicId).visible = true
 		topicId = nextTopicId
 	#1 down topic
 	elif choice == 1:
-		$SkillTween.interpolate_property($ConvoScene/ConvoBubble/BubbleSprite/DownArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
+		$SkillTween.interpolate_property($ConvoNode/ConvoBubble/DownArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
 		$SkillTween.start()
-		$ConvoScene/ConvoBubble/Topic.get_child(topicId).visible = false
-		$ConvoScene/ConvoBubble/Topic.get_child(prevTopicId).visible = true
+		$ConvoNode/ConvoBubble/Topic.get_child(topicId).visible = false
+		$ConvoNode/ConvoBubble/Topic.get_child(prevTopicId).visible = true
 		topicId = prevTopicId
 	#2 left rhetoric
 	elif choice == 2:
-		$SkillTween.interpolate_property($ConvoScene/ConvoBubble/BubbleSprite/LeftArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
+		$SkillTween.interpolate_property($ConvoNode/ConvoBubble/LeftArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
 		$SkillTween.start()
-		$ConvoScene/ConvoBubble/Rhetoric.get_child(rhetoricId).visible = false
-		$ConvoScene/ConvoBubble/Rhetoric.get_child(prevRhetoricId).visible = true
+		$ConvoNode/ConvoBubble/Rhetoric.get_child(rhetoricId).visible = false
+		$ConvoNode/ConvoBubble/Rhetoric.get_child(prevRhetoricId).visible = true
 		rhetoricId = prevRhetoricId
 	#3 right rhetoric
 	elif choice == 3:
-		$SkillTween.interpolate_property($ConvoScene/ConvoBubble/BubbleSprite/RightArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
+		$SkillTween.interpolate_property($ConvoNode/ConvoBubble/RightArrow, "scale", Vector2(0.25,0.25), Vector2(0.2,0.2), 0.4, Tween.TRANS_CIRC, Tween.EASE_IN_OUT)
 		$SkillTween.start()
-		$ConvoScene/ConvoBubble/Rhetoric.get_child(rhetoricId).visible = false
-		$ConvoScene/ConvoBubble/Rhetoric.get_child(nextRhetoricId).visible = true
+		$ConvoNode/ConvoBubble/Rhetoric.get_child(rhetoricId).visible = false
+		$ConvoNode/ConvoBubble/Rhetoric.get_child(nextRhetoricId).visible = true
 		rhetoricId = nextRhetoricId
 
 func react(reactionId):
@@ -309,7 +313,7 @@ func _on_Area2D_area_entered(area):
 				self.global_position = self.get_parent().portalArray[portalIndex+1]+Vector2(0,40)
 				
 		elif area.is_in_group("resource"):
-			print('OBTAINED RESOURCE')
+			#print('OBTAINED RESOURCE')
 			if ownerOfReceivedSignal.get_name() == "Fuel":
 				resourceStats[2] += rand_range(10,90)
 			ownerOfReceivedSignal.queue_free()
@@ -321,9 +325,9 @@ func reactionToNPCConvoBubble(NPCnode):
 	print("PLAYER REACT TO NPC CONVO")
 	NPCnode.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( NPCnode.get_node("AnimationPlayer"), "animation_finished" )
-	NPCnode.get_node("ConvoScene").position = Vector2(80, -70)
-	NPCnode.get_node("ConvoScene").scale = Vector2(1, 1)
-	NPCnode.get_node("ConvoScene").modulate = Color(1, 1, 1, 0.8)
+	NPCnode.get_node("ConvoNode").position = Vector2(40, -40)
+	NPCnode.get_node("ConvoNode").scale = Vector2(.5, .5)
+	NPCnode.get_node("ConvoNode").modulate = Color(1, 1, 1, 0.8)
 	print(prevTalkDamageReceived)
 	if self.prevTalkDamageReceived > 0:
 		$ReactParticles.process_material.hue_variation = 0.6
@@ -341,9 +345,9 @@ func reactionToConvoBubbleGeneric(nodeThatSentTheBubble, nodeThatReceivedTheBubb
 	print("REACTING TO CONVO")
 	nodeThatSentTheBubble.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( nodeThatSentTheBubble.get_node("AnimationPlayer"), "animation_finished" )
-	nodeThatSentTheBubble.get_node("ConvoScene").position = Vector2(80, -70)
-	nodeThatSentTheBubble.get_node("ConvoScene").scale = Vector2(1, 1)
-	nodeThatSentTheBubble.get_node("ConvoScene").modulate = Color(1, 1, 1, 0.8)
+	nodeThatSentTheBubble.get_node("ConvoNode").position = Vector2(40, -40)
+	nodeThatSentTheBubble.get_node("ConvoNode").scale = Vector2(0.5, 0.5)
+	nodeThatSentTheBubble.get_node("ConvoNode").modulate = Color(1, 1, 1, 0.8)
 	print(nodeThatReceivedTheBubble.prevTalkDamageReceived)
 	if nodeThatReceivedTheBubble.prevTalkDamageReceived > 0:
 		react(1)
@@ -362,6 +366,7 @@ func _on_InterfaceSignal_body_entered(body):
 		self.react(3)
 		self.currentTarget = body
 		body.currentTarget = self
+		body.velocity = Vector2(0, 0)
 		self.currentPlayerState = possiblePlayerStates.LOCKEDON
 		body.currentActionState = body.actionState.LOCKEDON
 
@@ -369,4 +374,3 @@ func _on_InterfaceSignal_body_entered(body):
 func _on_HungerTimer_timeout():
 	for i in range(5):
 		resourceStats[i] -= consumptionRates[i]
-	#print(resourceStats)

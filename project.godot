@@ -8,19 +8,17 @@
 
 config_version=4
 
-_global_script_classes=[ {
-"base": "Reference",
-"class": "RaycastAStar",
-"language": "GDScript",
-"path": "res://Characters/RayCast2D.gd"
-} ]
+_global_script_classes=[  ]
 _global_script_class_icons={
-"RaycastAStar": ""
+
 }
 
 [application]
 
 config/name="Roboguelike"
+config/description="You can rape robots.."
+boot_splash/use_filter=false
+boot_splash/bg_color=Color( 0, 0, 0, 1 )
 config/icon="res://icon.png"
 
 [debug]
@@ -133,4 +131,5 @@ interface={
 [rendering]
 
 quality/2d/use_pixel_snap=true
+environment/default_clear_color=Color( 0, 0, 0, 1 )
 environment/default_environment="res://default_env.tres"
