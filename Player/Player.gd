@@ -23,7 +23,7 @@ var currentTarget = self
 var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[general aggression, curiosity, erraticness, greed, grit]
 #var racismArray = [0, 0, 0, 0, 0] #[hackers, shooters, slinkers, scrappers, forkers] #higher value is more racist
 var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
-#var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
+var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
 #TEMP STATES
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
@@ -38,7 +38,7 @@ var signalSpeed = 200
 var NPCsThatAreInterestedInThisPlayer = 0
 
 
-var speed := 200.0
+var speed = 900.0*lilStats[4]
 var path := PoolVector2Array() setget set_path
 
 func set_path(value: PoolVector2Array) -> void:
@@ -87,7 +87,7 @@ func _physics_process(delta):
 			var x = controllerangle
 			$EquippedItemNode.rotation_degrees = rad2deg(controllerangle)
 			$InterfaceSignal.position = signalSpeed*getShotVelocityVector()
-		self.position += 200*delta*getLeftStickVector()
+		self.position += speed*delta*getLeftStickVector()
 		if currentPlayerState == possiblePlayerStates.LOCKEDON and str(currentTarget) != "[Deleted Object]":
 			$InterfaceSignal.global_position = currentTarget.global_position
 			if !currentTarget.is_in_group("NPC"):
@@ -125,6 +125,14 @@ func _input(event):
 		if event.is_action_pressed("leftmove"):
 			$EquippedItemNode.rotation_degrees = 180
 			$Sprite.frame = 2
+		if event.is_action_released("quicksave"):
+			var packed_scene = PackedScene.new()
+			packed_scene.pack(get_tree().get_current_scene())
+			ResourceSaver.save("res://savedscene.tscn", packed_scene)
+		if event.is_action_released("quickload"):
+			var packed_scene = load("res://savedscene.tscn")
+			var my_scene = packed_scene.instance()
+			add_child(my_scene)
 	elif currentPlayerState == possiblePlayerStates.LOCKEDON:
 		if !event.is_action_pressed("interface"):
 			if event.is_action_pressed("downmove"):
@@ -145,9 +153,13 @@ func _input(event):
 		if event.is_action_pressed("leftmove"):
 			changeTopicOrRhetoric(2)
 		if event.is_action_released("rt"):
-			$ConvoNode.modulate = Color(1,1,1,1)
-			$SkillTween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(80,-70), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
-			$SkillTween.start()
+			if bigStats[0] > 2: #if some social_stamina left can still talk
+				$ConvoNode.modulate = Color(1,1,1,1)
+				$SkillTween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(40,-40), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+				$SkillTween.start()
+			else:
+				$Messages.text = "Not enough social stamina to talk"
+				currentPlayerState = possiblePlayerStates.NORMAL
 
 func initiateTalkSession(NPCnode):
 	currentPlayerState = possiblePlayerStates.TALKING
@@ -305,6 +317,16 @@ func _on_Area2D_area_entered(area):
 		if area.is_in_group("convo") and ownerOfReceivedSignal.is_in_group("NPC"):
 			self.prevTalkDamageReceived = handleConvoBubble(self, ownerOfReceivedSignal)
 			reactionToNPCConvoBubble(ownerOfReceivedSignal)
+			if currentPlayerState != possiblePlayerStates.TALKING:
+				ownerOfReceivedSignal.fluctStats[2] -= 0.2
+				$Messages.text = "HEY! Listen to me!"
+				$Messages.visible = true
+				ownerOfReceivedSignal.react(2)
+				ownerOfReceivedSignal.get_node("ReactParticles").process_material.hue_variation = 0.3
+				ownerOfReceivedSignal.get_node("ReactParticles").amount = int(0.2*30)
+				ownerOfReceivedSignal.get_node("ReactParticles").emitting = true
+				ownerOfReceivedSignal.get_node("ReactParticles").restart()
+				ownerOfReceivedSignal.NPCexitTalkSession(ownerOfReceivedSignal.actionState.SEARCH)
 		elif area.is_in_group("portal"):
 			var portalIndex = self.get_parent().portalArray.find(area.global_position)
 			if portalIndex+1 >= self.get_parent().portalArray.size():
@@ -326,7 +348,7 @@ func reactionToNPCConvoBubble(NPCnode):
 	NPCnode.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( NPCnode.get_node("AnimationPlayer"), "animation_finished" )
 	NPCnode.get_node("ConvoNode").position = Vector2(40, -40)
-	NPCnode.get_node("ConvoNode").scale = Vector2(.5, .5)
+	NPCnode.get_node("ConvoNode").scale = Vector2(0.5, 0.5)
 	NPCnode.get_node("ConvoNode").modulate = Color(1, 1, 1, 0.8)
 	print(prevTalkDamageReceived)
 	if self.prevTalkDamageReceived > 0:

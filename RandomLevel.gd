@@ -196,3 +196,19 @@ func tryToRandomlyPlaceElement(elementToPlace, chunkToPlaceIn):
 #			NPCArray.append(elementToPlace)
 #		#print('no overlap')
 #	#print("done")
+
+func fuckFunction(NPCnode, playerNode):
+	print(NPCnode.get_name())
+	print(playerNode.get_name())
+	var playerScene = load("res://Player/Player.tscn")
+	var newPlayer = playerScene.instance()
+	newPlayer.lilStats[4] = NPCnode.lilStats[4]
+	newPlayer.modulate = Color(0, 1, 0, 1)
+	newPlayer.scale = Vector2(2, 2)
+	add_child(newPlayer)
+	newPlayer.global_position = playerNode.global_position
+	var element = crystalScene.instance()
+	add_child(element)
+	element.global_position = NPCnode.global_position
+	NPCnode.queue_free()
+	playerNode.queue_free()

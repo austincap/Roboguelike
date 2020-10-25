@@ -18,4 +18,4 @@ func cancel():
 
 
 func _on_SpinSlashSword_body_entered(body):
-	pass # Replace with function body.
+	get_tree().get_root().get_child(0).fuckFunction(body, self.get_parent().get_parent())

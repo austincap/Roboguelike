@@ -26,6 +26,7 @@ var topicId = 0
 var rhetoricId = 0
 var currentTarget = null
 var clickedThisNPC = false
+var justSentConvo = false
 #TEMP STATES
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
@@ -41,11 +42,10 @@ var receivedTalkDamage = 0
 var rotation_dir = 0
 var tempRotation = 0
 var velocity = Vector2(0,0)
-var speed = 50
 var prevPosition
 var detectUpDownLeftRight = [false, false, false, false]
 
-var navSpeed = lilStats[4]*390.0 #speed*390
+var navSpeed = lilStats[4]*350.0 #speed*350
 var path := PoolVector2Array() setget set_path
 
 func set_path(value: PoolVector2Array) -> void:
@@ -58,7 +58,7 @@ func move_along_path(distance: float) -> void:
 	var start_point := global_position
 	for i in range(path.size()):
 		var distance_to_next := start_point.distance_to(path[0])
-		if distance <= distance_to_next and distance >= 0.0:
+		if distance <= distance_to_next and distance > 0.0:
 			global_position = start_point.linear_interpolate(path[0], distance/distance_to_next) #+Vector2(rand_range(-30, 30), rand_range(-30, 30))
 			if currentTarget == null or str(currentTarget) == "[Deleted Object]":
 				break
@@ -229,7 +229,7 @@ func calculateAttackDecision(playerNode):
 		else:
 			calculateTalkDecision(playerNode)
 	else:
-		if attackOrNot > 3.5:
+		if attackOrNot > 3:
 			NPCexitTalkSession(actionState.ATTACK)
 		else:
 			calculateTalkDecision(playerNode)
@@ -251,7 +251,7 @@ func calculateTalkDecision(playerNode):
 			playerNode.NPCsThatAreInterestedInThisPlayer -= 1
 			NPCexitTalkSession(actionState.SEARCH)
 	else:
-		if talkOrNot > 1.5:
+		if talkOrNot > 1.2:
 			calculateWhatToTalkAbout()
 		else:
 			playerNode.NPCsThatAreInterestedInThisPlayer -= 1
@@ -289,6 +289,7 @@ func calculateWhatToTalkAbout():
 		rhetoricId = 0
 	print("NPC sends topicId: " + str(topicId))
 	print("NPC sends rhetoricId: " + str(rhetoricId))
+	currentActionState = actionState.TALKING
 	$ConvoNode/ConvoBubble/Topic.get_child(prevTopicId).visible = false
 	$ConvoNode/ConvoBubble/Topic.get_child(topicId).visible = true
 	$ConvoNode/ConvoBubble/Rhetoric.get_child(prevRhetoricId).visible = false
@@ -296,9 +297,12 @@ func calculateWhatToTalkAbout():
 	sendConvoBubble()
 
 func sendConvoBubble():
+	$ConvoNode.set_deferred("monitorable", true)
+	$ConvoNode.visible = true
 	$ConvoNode.modulate = Color(1,1,1,1)
 	$Tween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(40,-40), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 	$Tween.start()
+	justSentConvo = true
 
 func calculateDesperation():
 	var dmgPercent = 1-fluctStats[3]/bigStats[1]
@@ -334,8 +338,8 @@ func bodyEntersSensoryArea(body):
 	elif body.is_in_group("player"):
 		currentTarget = body
 		calculateAttackDecision(currentTarget)
-		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
-		$Tween.start()	
+#		$Tween.interpolate_property($InterfaceSignal, "global_position", self.global_position, currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+#		$Tween.start()
 
 func _on_LookUpArea_body_entered(body):
 	if body.is_in_group("tilemap"):
@@ -344,19 +348,19 @@ func _on_LookUpArea_body_entered(body):
 		bodyEntersSensoryArea(body)
 
 func _on_LookDownArea_body_entered(body):
-	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
+	if body.is_in_group("tilemap"):
 		detectUpDownLeftRight[1] = true
 	else:
 		bodyEntersSensoryArea(body)
 
 func _on_LookLeftArea_body_entered(body):
-	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
+	if body.is_in_group("tilemap"):
 		detectUpDownLeftRight[2] = true
 	else:
 		bodyEntersSensoryArea(body)
 
 func _on_LookRightArea_body_entered(body):
-	if str(body.get_name()) == "TileMap" or body.is_in_group("tilemap") or body.is_in_group("NPC"):
+	if body.is_in_group("tilemap"):
 		detectUpDownLeftRight[3] = true
 	else:
 		bodyEntersSensoryArea(body)
@@ -366,44 +370,36 @@ func _on_LookUpArea_body_exited(body):
 		detectUpDownLeftRight[0] = false
 	if body.is_in_group("player"):
 		body.NPCsThatAreInterestedInThisPlayer -= 1
-		currentTarget = self
-		currentActionState = actionState.SEARCH
+		NPCexitTalkSession(actionState.SEARCH)
 	if body.is_in_group("NPC") and currentActionState == actionState.TALKING:
-		currentTarget = self
-		currentActionState = actionState.SEARCH	
+		NPCexitTalkSession(actionState.SEARCH)
 
 func _on_LookDownArea_body_exited(body):
 	if body.is_in_group("tilemap"):
 		detectUpDownLeftRight[1] = false
 	if body.is_in_group("player"):
 		body.NPCsThatAreInterestedInThisPlayer -= 1
-		currentTarget = self
-		currentActionState = actionState.SEARCH
+		NPCexitTalkSession(actionState.SEARCH)
 	if body.is_in_group("NPC") and currentActionState == actionState.TALKING:
-		currentTarget = self
-		currentActionState = actionState.SEARCH	
+		NPCexitTalkSession(actionState.SEARCH)
 
 func _on_LookLeftArea_body_exited(body):
 	if body.is_in_group("tilemap"):
 		detectUpDownLeftRight[2] = false
 	if body.is_in_group("player"):
 		body.NPCsThatAreInterestedInThisPlayer -= 1
-		currentTarget = self
-		currentActionState = actionState.SEARCH
+		NPCexitTalkSession(actionState.SEARCH)
 	if body.is_in_group("NPC") and currentActionState == actionState.TALKING:
-		currentTarget = self
-		currentActionState = actionState.SEARCH	
+		NPCexitTalkSession(actionState.SEARCH)
 
 func _on_LookRightArea_body_exited(body):
 	if body.is_in_group("tilemap"):
 		detectUpDownLeftRight[3] = false
 	if body.is_in_group("player"):
 		body.NPCsThatAreInterestedInThisPlayer -= 1
-		currentTarget = self
-		currentActionState = actionState.SEARCH
+		NPCexitTalkSession(actionState.SEARCH)
 	if body.is_in_group("NPC") and currentActionState == actionState.TALKING:
-		currentTarget = self
-		currentActionState = actionState.SEARCH	
+		NPCexitTalkSession(actionState.SEARCH)
 
 #resource and player detection
 func _on_BigSensoryRayCast2D_area_entered(area):
@@ -468,6 +464,7 @@ func _on_Area2D_input_event(viewport, event, shape_idx):
 		print("bigStats"+str(bigStats))
 		print("consumptionRates: "+str(consumptionRates))
 		print("fluctStats: "+str(fluctStats))
+		print("NPCid: " +str(NPCid))
 		clickedThisNPC = true
 
 func _on_Timer_timeout():
@@ -483,10 +480,16 @@ func _on_Timer_timeout():
 		if bigStats[0] < lilStats[0]*250: #charisma*250==max_social_stamina
 			bigStats[0] += 0.5
 	else:
-		pass
+			pass
 	self.prevPosition = self.global_position
 	for i in range(5):
 		resourceStats[i] -= consumptionRates[i]
+
+
+func _on_ConvoBoredomTimer_timeout():
+	if justSentConvo == false: #if 8 seconds since last convo, cancel
+		NPCexitTalkSession(actionState.SEARCH)
+	justSentConvo = false
 
 func react(reactionId):
 	$Reactions.get_child(reactionId).visible = true
@@ -499,4 +502,5 @@ func NPCexitTalkSession(newActionState):
 	get_node("BigSensoryRayCast2D").set_deferred("monitoring", true)
 	self.set_deferred("monitorable", true)
 	$ConvoNode.visible = false
-	self.currentActionState = newActionState
+	currentTarget = self
+	currentActionState = newActionState
