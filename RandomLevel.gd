@@ -150,10 +150,14 @@ func _ready():
 	#$Camera2D.make_current()
 
 func checkNPCs():
+	var i = 0
 	for element in NPCArray:
 		if is_instance_valid(element) and element.is_in_group("NPC"):
-			if element.global_transform.origin.distance_to(element.prevPosition) < 2: #how far it has to be to justify culling
+			if element.global_transform.origin.distance_to(element.prevPosition) < 1: #how far it has to be to justify culling
 				element.queue_free()
+			else:
+				i+=1
+	print(i)
 	elementsChecked = true
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -168,7 +168,6 @@ monitoring = false
 monitorable = false
 
 [node name="Messages" type="Label" parent="."]
-visible = false
 margin_left = -70.0
 margin_top = -53.0
 margin_right = 14.0

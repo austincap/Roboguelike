@@ -1,28 +1,33 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://Conversation/Topic/smalltalk.png" type="Texture" id=1]
-[ext_resource path="res://Conversation/Topic/localarea.png" type="Texture" id=2]
-[ext_resource path="res://Conversation/Topic/gossip.png" type="Texture" id=3]
-[ext_resource path="res://Conversation/Topic/bigtalk.png" type="Texture" id=4]
-[ext_resource path="res://Conversation/Topic/advice.png" type="Texture" id=5]
+[ext_resource path="res://Conversation/Topic/Topics.png" type="Texture" id=1]
 
 [node name="Topic" type="Node2D"]
 
 [node name="0-SmallTalk" type="Sprite" parent="."]
 texture = ExtResource( 1 )
+hframes = 5
 
 [node name="1-You" type="Sprite" parent="."]
 visible = false
-texture = ExtResource( 3 )
+texture = ExtResource( 1 )
+hframes = 5
+frame = 1
 
 [node name="2-Gossip" type="Sprite" parent="."]
 visible = false
-texture = ExtResource( 2 )
+texture = ExtResource( 1 )
+hframes = 5
+frame = 2
 
 [node name="3-News" type="Sprite" parent="."]
 visible = false
-texture = ExtResource( 5 )
+texture = ExtResource( 1 )
+hframes = 5
+frame = 3
 
 [node name="4-DeepDiscussion" type="Sprite" parent="."]
 visible = false
-texture = ExtResource( 4 )
+texture = ExtResource( 1 )
+hframes = 5
+frame = 4

@@ -7,7 +7,7 @@ func _ready():
 	pass # Replace with function body.
 
 func use(direction):
-	$Tween.interpolate_property(self, "rotation_degrees", 0, 360, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	$Tween.interpolate_property(self, "rotation_degrees", 0, 720, 0.5, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 	$Tween.start()
 
 func cancel():
@@ -18,4 +18,5 @@ func cancel():
 
 
 func _on_SpinSlashSword_body_entered(body):
-	get_tree().get_root().get_child(0).fuckFunction(body, self.get_parent().get_parent())
+	pass
+	#get_tree().get_root().get_child(0).fuckFunction(body, self.get_parent().get_parent())

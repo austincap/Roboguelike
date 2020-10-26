@@ -10,154 +10,193 @@ __meta__ = {
 }
 
 [node name="Personality" type="HBoxContainer" parent="VBoxContainer"]
-margin_right = 56.0
+modulate = Color( 1, 1, 1, 0 )
+margin_right = 316.0
 margin_bottom = 14.0
+grow_horizontal = 0
 
 [node name="Aggressiveness" type="Label" parent="VBoxContainer/Personality"]
-margin_right = 8.0
+margin_right = 60.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "X"
 
 [node name="Openness" type="Label" parent="VBoxContainer/Personality"]
-margin_left = 12.0
-margin_right = 20.0
+margin_left = 64.0
+margin_right = 124.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "X"
 
 [node name="Erraticness" type="Label" parent="VBoxContainer/Personality"]
-margin_left = 24.0
-margin_right = 32.0
+margin_left = 128.0
+margin_right = 188.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "X"
 
 [node name="Selfishness" type="Label" parent="VBoxContainer/Personality"]
-margin_left = 36.0
-margin_right = 44.0
+margin_left = 192.0
+margin_right = 252.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "X"
 
 [node name="Confidence" type="Label" parent="VBoxContainer/Personality"]
-margin_left = 48.0
-margin_right = 56.0
+margin_left = 256.0
+margin_right = 316.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "X"
 
 [node name="Stats" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 18.0
-margin_right = 56.0
+margin_right = 316.0
 margin_bottom = 32.0
 
 [node name="Charisma" type="Label" parent="VBoxContainer/Stats"]
-margin_right = 24.0
+margin_right = 60.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "333"
 
 [node name="Intelligence" type="Label" parent="VBoxContainer/Stats"]
-margin_left = 28.0
-margin_right = 28.0
+margin_left = 64.0
+margin_right = 124.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
+text = "0.332"
 
 [node name="Offense" type="Label" parent="VBoxContainer/Stats"]
-margin_left = 32.0
-margin_right = 32.0
+margin_left = 128.0
+margin_right = 188.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
+text = "0.3232"
 
 [node name="Defense" type="Label" parent="VBoxContainer/Stats"]
-margin_left = 36.0
-margin_right = 36.0
+margin_left = 192.0
+margin_right = 252.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Speed" type="Label" parent="VBoxContainer/Stats"]
-margin_left = 40.0
-margin_right = 40.0
+margin_left = 256.0
+margin_right = 316.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Interests" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 36.0
-margin_right = 56.0
+margin_right = 316.0
 margin_bottom = 50.0
 
 [node name="SmallTalk" type="Label" parent="VBoxContainer/Interests"]
-margin_right = 24.0
+margin_right = 60.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "333"
 
 [node name="You" type="Label" parent="VBoxContainer/Interests"]
-margin_left = 28.0
-margin_right = 28.0
+margin_left = 64.0
+margin_right = 124.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Gossip" type="Label" parent="VBoxContainer/Interests"]
-margin_left = 32.0
-margin_right = 32.0
+margin_left = 128.0
+margin_right = 188.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="News" type="Label" parent="VBoxContainer/Interests"]
-margin_left = 36.0
-margin_right = 36.0
+margin_left = 192.0
+margin_right = 252.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="DeepTalk" type="Label" parent="VBoxContainer/Interests"]
-margin_left = 40.0
-margin_right = 40.0
+margin_left = 256.0
+margin_right = 316.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Knowledge" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 54.0
-margin_right = 56.0
+margin_right = 316.0
 margin_bottom = 68.0
 
 [node name="SmallTalk" type="Label" parent="VBoxContainer/Knowledge"]
-margin_right = 24.0
+margin_right = 60.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "333"
 
 [node name="You" type="Label" parent="VBoxContainer/Knowledge"]
-margin_left = 28.0
-margin_right = 28.0
+margin_left = 64.0
+margin_right = 124.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Gossip" type="Label" parent="VBoxContainer/Knowledge"]
-margin_left = 32.0
-margin_right = 32.0
+margin_left = 128.0
+margin_right = 188.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="News" type="Label" parent="VBoxContainer/Knowledge"]
-margin_left = 36.0
-margin_right = 36.0
+margin_left = 192.0
+margin_right = 252.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="DeepTalk" type="Label" parent="VBoxContainer/Knowledge"]
-margin_left = 40.0
-margin_right = 40.0
+margin_left = 256.0
+margin_right = 316.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="ConsumptionRates" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 72.0
-margin_right = 56.0
+margin_right = 316.0
 margin_bottom = 86.0
 
 [node name="Crystals" type="Label" parent="VBoxContainer/ConsumptionRates"]
-margin_right = 24.0
+margin_right = 60.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 text = "333"
 
 [node name="Metal" type="Label" parent="VBoxContainer/ConsumptionRates"]
-margin_left = 28.0
-margin_right = 28.0
+margin_left = 64.0
+margin_right = 124.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Fuel" type="Label" parent="VBoxContainer/ConsumptionRates"]
-margin_left = 32.0
-margin_right = 32.0
+margin_left = 128.0
+margin_right = 188.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="CarbonFiber" type="Label" parent="VBoxContainer/ConsumptionRates"]
-margin_left = 36.0
-margin_right = 36.0
+margin_left = 192.0
+margin_right = 252.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
 
 [node name="Rubber" type="Label" parent="VBoxContainer/ConsumptionRates"]
-margin_left = 40.0
-margin_right = 40.0
+margin_left = 256.0
+margin_right = 316.0
 margin_bottom = 14.0
+rect_min_size = Vector2( 60, 0 )
+[connection signal="mouse_entered" from="VBoxContainer/Personality" to="." method="_on_Personality_mouse_entered"]
+[connection signal="mouse_exited" from="VBoxContainer/Personality" to="." method="_on_Personality_mouse_exited"]
+[connection signal="mouse_entered" from="VBoxContainer/Stats" to="." method="_on_Stats_mouse_entered"]
+[connection signal="mouse_exited" from="VBoxContainer/Stats" to="." method="_on_Stats_mouse_exited"]
+[connection signal="mouse_entered" from="VBoxContainer/Interests" to="." method="_on_Interests_mouse_entered"]
+[connection signal="mouse_exited" from="VBoxContainer/Interests" to="." method="_on_Interests_mouse_exited"]
+[connection signal="mouse_entered" from="VBoxContainer/Knowledge" to="." method="_on_Knowledge_mouse_entered"]
+[connection signal="mouse_exited" from="VBoxContainer/Knowledge" to="." method="_on_Knowledge_mouse_exited"]
+[connection signal="mouse_entered" from="VBoxContainer/ConsumptionRates" to="." method="_on_ConsumptionRates_mouse_entered"]
+[connection signal="mouse_exited" from="VBoxContainer/ConsumptionRates" to="." method="_on_ConsumptionRates_mouse_exited"]

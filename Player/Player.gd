@@ -92,7 +92,7 @@ func _physics_process(delta):
 			$InterfaceSignal.global_position = currentTarget.global_position
 			if !currentTarget.is_in_group("NPC"):
 				currentPlayerState == possiblePlayerStates.NORMAL
-			if Input.is_action_pressed("interface"):
+			if Input.is_action_pressed("interface") and currentTarget != self:
 				initiateTalkSession(currentTarget)
 			else:
 				#currentTarget.currentActionState = currentTarget.actionState.SEARCH
@@ -155,11 +155,17 @@ func _input(event):
 		if event.is_action_released("rt"):
 			if bigStats[0] > 2: #if some social_stamina left can still talk
 				$ConvoNode.modulate = Color(1,1,1,1)
-				$SkillTween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(40,-40), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+				$SkillTween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(20,-20), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 				$SkillTween.start()
 			else:
-				$Messages.text = "Not enough social stamina to talk"
+				displayMessage("Not enough social stamina to talk", 2)
 				currentPlayerState = possiblePlayerStates.NORMAL
+
+func displayMessage(message, time):
+	$Messages.modulate = Color(1,1,1,1)
+	$Messages.text = message
+	$SkillTween.interpolate_property($Messages, "self_modulate", Color(1,1,1,1), Color(0,0,0,0), time, Tween.TRANS_CIRC, Tween.EASE_OUT)
+	$SkillTween.start()
 
 func initiateTalkSession(NPCnode):
 	currentPlayerState = possiblePlayerStates.TALKING
@@ -174,6 +180,7 @@ func initiateTalkSession(NPCnode):
 	$InterfaceSignal.global_position = currentTarget.global_position
 	$InterfaceSignal/Particles2D.process_material.initial_velocity = 300
 	print('-----------------talk session initiated')
+	NPCnode.get_node("ConvoBoredomTimer").start(-1)
 
 func exitTalkSession(NPCnode):
 	$InterfaceSignal.global_position = self.global_position
@@ -181,7 +188,7 @@ func exitTalkSession(NPCnode):
 	get_node("ConvoNode").set_deferred("monitorable", false)
 	self.set_deferred("monitorable", true)
 	$ConvoNode.visible = false
-	NPCnode.NPCexitTalkSession(NPCnode.actionState.SEARCH)
+	NPCnode.NPCexitTalkSession(NPCnode.actionState.ESCAPING)
 	currentPlayerState = possiblePlayerStates.NORMAL
 	print('-----------------talk session ended')
 
@@ -194,6 +201,12 @@ func handleConvoBubble(receiverNode, senderNode):
 	elif senderNode.topicId == 1: #you
 		senderNode.bigStats[0] -= 1 #social stamina cost 1 
 		talkDamageDealt = clamp((receiverNode.personality[3]+receiverNode.interestArray[senderNode.topicId]-(1-senderNode.knowledgeArray[senderNode.topicId])), 0, 1)
+		if senderNode == self:
+			print("PA="+str(receiverNode.fluctStats[2]))
+			randomize() #get probability using logistic function that increases likelihood you'll pass the threshold to unlock new info
+			print(rand_range(1/(1+6*pow(0.6, receiverNode.fluctStats[2])), 1))
+			if (rand_range(1/(1+6*pow(0.6, receiverNode.fluctStats[2])), 1)) > 0.9:
+				receiverNode.get_node("StatDisplay/VBoxContainer").get_child(randi()%4).modulate = Color(1,1,1,1)
 	elif senderNode.topicId == 2: #gossip
 		senderNode.bigStats[0] -= 2 #social stamina cost 2
 		talkDamageDealt = clamp((receiverNode.interestArray[senderNode.topicId]*(1+senderNode.knowledgeArray[senderNode.topicId])), 0, 1)
@@ -319,8 +332,7 @@ func _on_Area2D_area_entered(area):
 			reactionToNPCConvoBubble(ownerOfReceivedSignal)
 			if currentPlayerState != possiblePlayerStates.TALKING:
 				ownerOfReceivedSignal.fluctStats[2] -= 0.2
-				$Messages.text = "HEY! Listen to me!"
-				$Messages.visible = true
+				displayMessage("He got pissed I didn't respond", 5)
 				ownerOfReceivedSignal.react(2)
 				ownerOfReceivedSignal.get_node("ReactParticles").process_material.hue_variation = 0.3
 				ownerOfReceivedSignal.get_node("ReactParticles").amount = int(0.2*30)
@@ -348,7 +360,7 @@ func reactionToNPCConvoBubble(NPCnode):
 	NPCnode.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( NPCnode.get_node("AnimationPlayer"), "animation_finished" )
 	NPCnode.get_node("ConvoNode").position = Vector2(40, -40)
-	NPCnode.get_node("ConvoNode").scale = Vector2(0.5, 0.5)
+	NPCnode.get_node("ConvoNode").scale = Vector2(1, 1)
 	NPCnode.get_node("ConvoNode").modulate = Color(1, 1, 1, 0.8)
 	print(prevTalkDamageReceived)
 	if self.prevTalkDamageReceived > 0:
@@ -368,7 +380,7 @@ func reactionToConvoBubbleGeneric(nodeThatSentTheBubble, nodeThatReceivedTheBubb
 	nodeThatSentTheBubble.get_node("AnimationPlayer").play("returnConvoNode")
 	yield( nodeThatSentTheBubble.get_node("AnimationPlayer"), "animation_finished" )
 	nodeThatSentTheBubble.get_node("ConvoNode").position = Vector2(40, -40)
-	nodeThatSentTheBubble.get_node("ConvoNode").scale = Vector2(0.5, 0.5)
+	nodeThatSentTheBubble.get_node("ConvoNode").scale = Vector2(1, 1)
 	nodeThatSentTheBubble.get_node("ConvoNode").modulate = Color(1, 1, 1, 0.8)
 	print(nodeThatReceivedTheBubble.prevTalkDamageReceived)
 	if nodeThatReceivedTheBubble.prevTalkDamageReceived > 0:
@@ -391,6 +403,7 @@ func _on_InterfaceSignal_body_entered(body):
 		body.velocity = Vector2(0, 0)
 		self.currentPlayerState = possiblePlayerStates.LOCKEDON
 		body.currentActionState = body.actionState.LOCKEDON
+		
 
 
 func _on_HungerTimer_timeout():
