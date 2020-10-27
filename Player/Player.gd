@@ -1,6 +1,7 @@
 extends KinematicBody2D
 var raceId = 0
 var aimAngle = 0
+#signal showNPCstats(whichNode)
 
 enum possiblePlayerStates{TALKING, TRADING, COMBAT, HACKING, NORMAL, LOCKEDON}
 var currentPlayerState = possiblePlayerStates.NORMAL
@@ -16,7 +17,7 @@ var inventory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #inventory ID numbers, position c
 var resourceStats = [100, 30, 50, 20, 10] #[crystals, metal, fuel, carbon fiber, rubber] when hits 0 you're dead, able to trade/sell resources to others by multiplying by consumption rates
 #STATS
 var lilStats = [0.2, 0.1, 0.5, 0.4, 0.2] #[charisma, intelligence, attack, defense, speed]
-var bigStats = [30, 40] #[social_stamina, maxHP]
+var bigStats = [300, 40] #[social_stamina, maxHP]
 var consumptionRates = [0.0, 0.3, 0.5, 0.2, 0] #[crystals, metal, fuel, carbon fiber, rubber] #subtract every timestep from corresponding resource
 var currentTarget = self
 #PERSONALITY TRAITS
@@ -78,6 +79,7 @@ func _physics_process(delta):
 		if Input.is_action_pressed("interface"):
 			$InterfaceSignal.global_position = currentTarget.global_position
 		else:
+			currentTarget.NPCexitTalkSession(currentTarget.actionState.ESCAPING)
 			exitTalkSession(currentTarget)
 	else:
 		var xAxisRL = Input.get_joy_axis(0, JOY_AXIS_2)
@@ -87,6 +89,8 @@ func _physics_process(delta):
 			var x = controllerangle
 			$EquippedItemNode.rotation_degrees = rad2deg(controllerangle)
 			$InterfaceSignal.position = signalSpeed*getShotVelocityVector()
+		else:
+			$InterfaceSignal.global_position = get_global_mouse_position()
 		self.position += speed*delta*getLeftStickVector()
 		if currentPlayerState == possiblePlayerStates.LOCKEDON and str(currentTarget) != "[Deleted Object]":
 			$InterfaceSignal.global_position = currentTarget.global_position
@@ -152,14 +156,18 @@ func _input(event):
 			changeTopicOrRhetoric(3)
 		if event.is_action_pressed("leftmove"):
 			changeTopicOrRhetoric(2)
-		if event.is_action_released("rt"):
+		if event.is_action_released("rt") or (event is InputEventMouseButton and event.pressed):
 			if bigStats[0] > 2: #if some social_stamina left can still talk
 				$ConvoNode.modulate = Color(1,1,1,1)
 				$SkillTween.interpolate_property($ConvoNode, "global_position", self.global_position+Vector2(20,-20), currentTarget.global_position, 1, Tween.TRANS_LINEAR, Tween.EASE_OUT)
 				$SkillTween.start()
 			else:
-				displayMessage("Not enough social stamina to talk", 2)
+				displayMessage("Not enough social stamina to talk", 5)
 				currentPlayerState = possiblePlayerStates.NORMAL
+#		if event.is_action_pressed("rightStick"):
+#			randomize()
+#			self.whichRow = currentTarget.get_node("StatDisplay/VBoxContainer").get_child(randi()%4)
+#			emit_signal("showNPCstats", whichRow)
 
 func displayMessage(message, time):
 	$Messages.modulate = Color(1,1,1,1)
@@ -179,6 +187,7 @@ func initiateTalkSession(NPCnode):
 	NPCnode.get_node("ConvoNode").set_deferred("monitorable", true)
 	$InterfaceSignal.global_position = currentTarget.global_position
 	$InterfaceSignal/Particles2D.process_material.initial_velocity = 300
+	NPCnode.get_node("StatDisplay").visible = true
 	print('-----------------talk session initiated')
 	NPCnode.get_node("ConvoBoredomTimer").start(-1)
 
@@ -188,7 +197,7 @@ func exitTalkSession(NPCnode):
 	get_node("ConvoNode").set_deferred("monitorable", false)
 	self.set_deferred("monitorable", true)
 	$ConvoNode.visible = false
-	NPCnode.NPCexitTalkSession(NPCnode.actionState.ESCAPING)
+	
 	currentPlayerState = possiblePlayerStates.NORMAL
 	print('-----------------talk session ended')
 
@@ -206,7 +215,10 @@ func handleConvoBubble(receiverNode, senderNode):
 			randomize() #get probability using logistic function that increases likelihood you'll pass the threshold to unlock new info
 			print(rand_range(1/(1+6*pow(0.6, receiverNode.fluctStats[2])), 1))
 			if (rand_range(1/(1+6*pow(0.6, receiverNode.fluctStats[2])), 1)) > 0.9:
-				receiverNode.get_node("StatDisplay/VBoxContainer").get_child(randi()%4).modulate = Color(1,1,1,1)
+				var whichRow = receiverNode.get_node("StatDisplay/VBoxContainer").get_child(randi()%4)
+				randomize()
+				print(whichRow.get_child(randi()%4).get_name())
+				whichRow.get_child(randi()%4).visible = true
 	elif senderNode.topicId == 2: #gossip
 		senderNode.bigStats[0] -= 2 #social stamina cost 2
 		talkDamageDealt = clamp((receiverNode.interestArray[senderNode.topicId]*(1+senderNode.knowledgeArray[senderNode.topicId])), 0, 1)

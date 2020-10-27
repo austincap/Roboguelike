@@ -11,9 +11,10 @@ var characterScene = preload("res://Characters/NPC.tscn")
 #var slinkerScene = load("res://Characters/Slinker.tscn")
 #var scrapperScene = load("res://Characters/Scrapper.tscn")
 #var forkerScene = load("res://Characters/Forker.tscn")
-#var stalkerScene = load("res://Characters/Stalker.tscn")
-
+var wingerScene = load("res://Characters/Winger.tscn")
+var lockedBarricadeScene = preload("res://LevelElements/Entrances/LockedBarricade.tscn")
 #var hazardScene = load("res://LevelElements/Hazard.tscn")
+var portalScene = preload("res://LevelElements/Entrances/Portal.tscn")
 
 var size_of_each_chunk = 576
 var x_chunks = 6
@@ -94,8 +95,9 @@ func _ready():
 			#add level elements to chunk
 			#add tunnels
 			if (int(northConnection)+int(eastConnection)+int(southConnection)+int(westConnection)) >= 7:
-				scene = load("res://LevelElements/SewerEntrance.tscn")
-				element = scene.instance()
+#				scene = load("res://LevelElements/SewerEntrance.tscn")
+#				element = scene.instance()
+				element = portalScene.instance()
 				tryToRandomlyPlaceElement(element, chunk)
 				portalArray.append(element.global_position) #probably need a smarter way of tracking this if I stay with portals
 				isolatedchunkCount += 1
@@ -136,17 +138,21 @@ func _ready():
 #					for i in int(getRandomNumber(3)):
 #						element = scrapperScene.instance()
 #						tryToRandomlyPlaceElement(element, chunk)
+#				for i in int(getRandomNumber(1)):
+#					element = characterScene.instance()
+#					element.NPCid = NPCid
+#					NPCid += 1
+#					tryToRandomlyPlaceElement(element, chunk)
 				for i in int(getRandomNumber(1)):
-					element = characterScene.instance()
+					element = wingerScene.instance()
 					element.NPCid = NPCid
 					NPCid += 1
 					tryToRandomlyPlaceElement(element, chunk)
 			#add hazards and flavor objects
-#			randomize()
-#			if rand_range(0.0, 1.0) < hazardLikelihood:
-#				for i in int(getRandomNumber(3)):
-#					element = hazardScene.instance()
-#					tryToRandomlyPlaceElement(element, chunk)
+			randomize()
+			if rand_range(0.0, 1.0) < hazardLikelihood:
+				element = lockedBarricadeScene.instance()
+				tryToRandomlyPlaceElement(element, chunk)
 	#$Camera2D.make_current()
 
 func checkNPCs():
@@ -161,13 +167,14 @@ func checkNPCs():
 	elementsChecked = true
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not event is InputEventMouseButton:
-		return
-	if event.button_index != BUTTON_LEFT or not event.pressed:
-		return
-	var new_path = $Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
-	$PlayerNode/Line2D.points = new_path
-	$PlayerNode.path = new_path
+	if $PlayerNode.currentPlayerState != $PlayerNode.possiblePlayerStates.TALKING:
+		if not event is InputEventMouseButton:
+			return
+		if event.button_index != BUTTON_LEFT or not event.pressed:
+			return
+		var new_path = $Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
+		#$PlayerNode/Line2D.points = new_path
+		$PlayerNode.path = new_path
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):

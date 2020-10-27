@@ -1,11 +1,11 @@
 [gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://Conversation/Reactions/Reactions.tscn" type="PackedScene" id=1]
-[ext_resource path="res://Characters/NPC.gd" type="Script" id=2]
+[ext_resource path="res://Characters/winger-spriteframes.tres" type="SpriteFrames" id=2]
 [ext_resource path="res://Conversation/ConvoScene.tscn" type="PackedScene" id=3]
 [ext_resource path="res://Conversation/Reactions/ReactParticles.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Conversation/StatDisplay.tscn" type="PackedScene" id=5]
-[ext_resource path="res://Characters/scrapper.png" type="Texture" id=6]
+[ext_resource path="res://Characters/Winger.gd" type="Script" id=7]
 
 [sub_resource type="CapsuleShape2D" id=1]
 radius = 20.4838
@@ -99,15 +99,14 @@ initial_velocity = 2.0
 orbit_velocity = 0.0
 orbit_velocity_random = 0.0
 
-[node name="NPC" type="KinematicBody2D" groups=[
+[node name="Winger" type="KinematicBody2D" groups=[
 "NPC",
 ]]
-scale = Vector2( 0.5, 0.5 )
 z_index = 1
 collision_layer = 19
 collision_mask = 33
 collision/safe_margin = 0.04
-script = ExtResource( 2 )
+script = ExtResource( 7 )
 
 [node name="Area2D" type="Area2D" parent="."]
 z_index = 5
@@ -117,10 +116,6 @@ collision_mask = 36
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
 scale = Vector2( 0.5, 0.4 )
 shape = SubResource( 1 )
-
-[node name="Polygon2D" type="Polygon2D" parent="."]
-visible = false
-polygon = PoolVector2Array( 25.8218, 14.1093, -42.6152, 12.0143, -0.0166626, -50.1377 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 scale = Vector2( 0.5, 0.4 )
@@ -215,10 +210,6 @@ visible = false
 [node name="StatDisplay" parent="." instance=ExtResource( 5 )]
 position = Vector2( 60, -30 )
 
-[node name="Sprite" type="Sprite" parent="."]
-texture = ExtResource( 6 )
-hframes = 4
-
 [node name="EquippedItemNode" type="Node2D" parent="."]
 
 [node name="ConvoNode" parent="." instance=ExtResource( 3 )]
@@ -240,6 +231,10 @@ __meta__ = {
 process_mode = 0
 wait_time = 8.0
 one_shot = true
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="."]
+frames = ExtResource( 2 )
+playing = true
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]
 [connection signal="body_entered" from="Area2D" to="." method="_on_Area2D_body_entered"]
 [connection signal="input_event" from="Area2D" to="." method="_on_Area2D_input_event"]

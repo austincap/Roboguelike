@@ -8,11 +8,11 @@ var memory = [] #NUMBER OF MEMORIES CONTROLLED BY INTELLIGENCE
 var inventory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #inventory ID numbers, position corresponds to inventory arrangement
 var resourceStats = [100, 30, 50, 20, 10] #[crystals, metal, fuel, carbon fiber, rubber] lower number means more hunger, able to trade/sell resources to others by multiplying by consumption rates
 #var impulseStats = [100, 0, 100, 0, 0] #[current_health, desperation, social_stamina/lonely/socially_satiated, fear/courage, temp_personal_affinity]
-var knowledgeArray = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.2, 0.4, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
+var knowledgeArray = [0.05, 0.1, 0.2, 0.1, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0] #[small talk, knowledgeOfSelf, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
 #PERSONALITY TRAITS (CAN BE CHANGED BY TALKING OR HACKING)
-var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[general aggression, openess/curiosity, erraticness, greed/selfishness, grit]
+var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[aggression/impulsivity, openess/curiosity, erraticness, greed/selfishness, grit/confidence]
 var racismArray = [0, 0, 0, 0, 0] #[hackers, shooters, slinkers, scrappers, forkers] #higher value is more racist
-var interestArray = [0.1, 0.15, -0.5, 0.0, 0.3, 0.8, 0.7, 0.6, 0.0, 0.0] #[small talk, you, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
+var interestArray = [0.1, -0.05, 0.0, 0.1, -0.1, 0.0, 0.0, 0.1, -0.2, 0.0] #[small talk, interestInSelf, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
 #FIXED STATS (ALTHOUGH THEY CAN BE CHANGED BY AUGMENTS)
 var raceId = 3
 var NPCid
@@ -20,7 +20,7 @@ var lilStats = [0.1, 0.1, 0.5, 0.4, 0.2] #[charisma, intelligence, attack, defen
 var bigStats = [30, 120] #[current_social_stamina, maximum_HP] ##max_social_stamina == charisma*300, max_hp=defense*300
 var consumptionRates = [0.0, 0.3, 0.5, 0.2, 0] #[crystals, metal, fuel, carbon fiber, rubber] #subtract every timestep from corresponding resource
 #FLUCTUATING STATS
-var fluctStats = [0, 0.5, 0, 40, 0, 0.5, 0.99] #[talkDamage given, desperation currently having, personal affinity with player, current HP, personal affinity with any NPC convo partner, courage, loneliness]
+var fluctStats = [0, 0.5, 0, 40, 0, 0.5, 0.9] #[talkDamage given, desperation currently having, personal affinity with player, current HP, personal affinity with any NPC convo partner, courage, loneliness]
 var prevTalkDamageReceived = 0
 var NPCprevTopicId = 0
 var NPCprevRhetoricId = 0
@@ -80,7 +80,7 @@ func move_along_path(distance: float) -> void:
 func moveNPC():
 	var new_path
 	if currentActionState == actionState.PATHFINDING:
-		$Polygon2D.modulate = Color(1, 0, 0)
+
 		navSpeed = lilStats[4]*390+40
 		get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
 		new_path = self.get_parent().get_parent().get_simple_path(self.global_position, self.currentTarget.global_position, true)
@@ -100,7 +100,7 @@ func moveNPC():
 		new_path = self.get_parent().get_parent().get_simple_path(self.global_position, self.global_position+20*randomPositionChange, true)
 	
 	else:
-		$Polygon2D.modulate = Color(0, 1, 0)
+
 		navSpeed = lilStats[4]*390
 		get_node("BigSensoryRayCast2D").set_deferred("monitoring", true)
 		var randomPositionChange
@@ -120,8 +120,8 @@ func moveNPC():
 func _on_Personality_mouse_entered(rownode):
 	var tempName
 	for child in rownode.get_children():
-		if len(child.text) < 2:
-			tempName = child.text
+		if child.text.substr(0,1) == "-":
+			tempName = child.text.substr(2,3)+"-"+child.text.substr(3)
 		else:
 			tempName = child.text.substr(0,1)+"-"+child.text.substr(2)
 		child.text = child.get_name()
@@ -132,8 +132,14 @@ func _on_Personality_mouse_exited(rownode):
 	var tempName
 	for child in rownode.get_children():
 		tempName = child.text
-		child.text = child.get_name().substr(0,1)+"."+child.get_name().substr(2)
+		if child.get_name().substr(0,1) == "-":
+			child.text = child.get_name().substr(2,3)+"."+child.get_name().substr(3)
+		else:
+			child.text = child.get_name().substr(0,1)+"."+child.get_name().substr(2)
 		child.set_name(tempName)
+
+
+
 
 func _ready():
 	$StatDisplay/VBoxContainer/Personality.connect("mouse_entered", self, "_on_Personality_mouse_entered", [$StatDisplay/VBoxContainer/Personality])
@@ -146,7 +152,7 @@ func _ready():
 	$StatDisplay/VBoxContainer/ConsumptionRates.connect("mouse_exited", self, "_on_Personality_mouse_exited", [$StatDisplay/VBoxContainer/ConsumptionRates])
 	$StatDisplay/VBoxContainer/Knowledge.connect("mouse_entered", self, "_on_Personality_mouse_entered", [$StatDisplay/VBoxContainer/Knowledge])
 	$StatDisplay/VBoxContainer/Knowledge.connect("mouse_exited", self, "_on_Personality_mouse_exited", [$StatDisplay/VBoxContainer/Knowledge])
-
+	#get_node("../../../PlayerNode").connect("showNPCstats", self, "_on_Personality_mouse_entered", [$StatDisplay/VBoxContainer/Knowledge])
 	#randomize individual
 	for i in range(5):
 		randomize()
@@ -158,11 +164,13 @@ func _ready():
 		$StatDisplay/VBoxContainer/Stats.get_child(i).text = str(lilStats[i])
 	for i in range(5):
 		randomize()
-		interestArray[i] = clamp(interestArray[i]+rand_range(-0.4, 0.4), 0, 1)+0.00001
+		interestArray[i] = interestArray[i]+rand_range(-0.4, 0.4)
+		#interestArray[i] = clamp(interestArray[i]+rand_range(-0.4, 0.4), 0, 1)+0.00001
 		$StatDisplay/VBoxContainer/Interests.get_child(i).text = str(interestArray[i])
 	for i in range(5):
 		randomize()
-		knowledgeArray[i] = clamp(knowledgeArray[i]+rand_range(-0.2, 0.2), 0, 1)+0.00001
+		knowledgeArray[i]+rand_range(-0.2, 0.2)
+		#knowledgeArray[i] = clamp(knowledgeArray[i]+rand_range(-0.2, 0.2), 0, 1)+0.00001
 		$StatDisplay/VBoxContainer/Knowledge.get_child(i).text = str(knowledgeArray[i])
 	for i in range(5):
 		randomize()
@@ -202,32 +210,7 @@ func _physics_process(delta):
 #			print("ESCAPING TO SEARCH")
 #			currentActionState = actionState.SEARCH
 #			moveNPC()
-	if velocity.y >= 1:
-		if abs(velocity.x) < 0.28:
-			#DOWN
-			$EquippedItemNode.rotation_degrees = 0
-			$Sprite.frame = 0
-		elif velocity.x >= 0:
-			#RIGHT
-			$EquippedItemNode.rotation_degrees = -90
-			$Sprite.frame = 3
-		else:
-			#LEFT
-			$EquippedItemNode.rotation_degrees = 90
-			$Sprite.frame = 2
-	else:
-		if abs(velocity.x) < 0.28:
-			#UP
-			$EquippedItemNode.rotation_degrees = 180
-			$Sprite.frame = 1
-		elif velocity.x >= 0:
-			#RIGHT
-			$EquippedItemNode.rotation_degrees = -90
-			$Sprite.frame = 3
-		else:
-			#LEFT
-			$EquippedItemNode.rotation_degrees = 90
-			$Sprite.frame = 2
+
 
 #pick up item, receive player interfacesignal and convos
 func _on_Area2D_area_entered(area):
@@ -558,12 +541,15 @@ func _on_Timer_timeout():
 
 
 func _on_ConvoBoredomTimer_timeout():
-	if justSentConvo == false: #if 8 seconds since last convo, cancel
-		var playerNode = get_tree().get_root().get_child(0).get_node("PlayerNode")
-		playerNode.displayMessage("he got bored and walked away...", 5)
-		playerNode.exitTalkSession(self)
-		NPCexitTalkSession(actionState.ESCAPING)
-	justSentConvo = false
+	if currentActionState == actionState.TALKING:
+		if justSentConvo == false: #if 8 seconds since last convo, cancel
+			var playerNode = get_tree().get_root().get_child(0).get_node("PlayerNode")
+			playerNode.displayMessage("he got bored and walked away...", 5)
+			playerNode.exitTalkSession(self)
+			NPCexitTalkSession(actionState.ESCAPING)
+		justSentConvo = false
+	else:
+		goalAssignment()
 
 func react(reactionId):
 	$Reactions.get_child(reactionId).visible = true
@@ -572,9 +558,10 @@ func react(reactionId):
 	$Reactions.get_child(reactionId).visible = false
 
 func NPCexitTalkSession(newActionState):
-	get_node("ConvoNode").set_deferred("monitorable", false)
-	get_node("BigSensoryRayCast2D").set_deferred("monitoring", true)
-	self.set_deferred("monitorable", true)
+	$StatDisplay.visible = false
 	$ConvoNode.visible = false
+	$ConvoNode.set_deferred("monitorable", false)
+	$BigSensoryRayCast2D.set_deferred("monitoring", true)
+	self.set_deferred("monitorable", true)
 	currentTarget = self
 	currentActionState = newActionState
