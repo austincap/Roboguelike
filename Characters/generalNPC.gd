@@ -1,10 +1,8 @@
 extends KinematicBody2D
 
-
-
 #INVENTORY AND SKILLS AND OTHER FREQUENTLY CHANGING DATA
 var skillDict
-var memory = [] #NUMBER OF MEMORIES CONTROLLED BY INTELLIGENCE
+var memory = {} #NUMBER OF MEMORIES CONTROLLED BY INTELLIGENCE
 var inventory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #inventory ID numbers, position corresponds to inventory arrangement
 var resourceStats = [100, 30, 50, 20, 10] #[crystals, metal, fuel, carbon fiber, rubber] lower number means more hunger, able to trade/sell resources to others by multiplying by consumption rates
 #var impulseStats = [100, 0, 100, 0, 0] #[current_health, desperation, social_stamina/lonely/socially_satiated, fear/courage, temp_personal_affinity]
@@ -14,12 +12,17 @@ var personality = [0.1, 0.55, 0.02, 0.3, 0.7] #[aggression/impulsivity, openess/
 var racismArray = [0, 0, 0, 0, 0] #[hackers, shooters, slinkers, scrappers, forkers] #higher value is more racist
 var interestArray = [0.1, -0.05, 0.0, 0.1, -0.1, 0.0, 0.0, 0.1, -0.2, 0.0] #[small talk, interestInSelf, gossip, news, big talk, deflect, emphasize, flatter, insult, joke]
 #FIXED STATS (ALTHOUGH THEY CAN BE CHANGED BY AUGMENTS)
-var raceId = 3
-var NPCid
 var lilStats = [0.1, 0.1, 0.5, 0.4, 0.2] #[charisma, intelligence, attack, defense, speed]
 var bigStats = [30, 120] #[current_social_stamina, maximum_HP] ##max_social_stamina == charisma*300, max_hp=defense*300
 var consumptionRates = [0.0, 0.3, 0.5, 0.2, 0] #[crystals, metal, fuel, carbon fiber, rubber] #subtract every timestep from corresponding resource
+var raceId = 3
+var NPCid
+
 #FLUCTUATING STATS
+var dopamine = 0.5
+var courage = 0.56
+var loneliness = 0.99
+var currentHP = 40
 var fluctStats = [0, 0.5, 0, 40, 0, 0.5, 0.9] #[talkDamage given, desperation currently having, personal affinity with player, current HP, personal affinity with any NPC convo partner, courage, loneliness]
 var prevTalkDamageReceived = 0
 var NPCprevTopicId = 0
@@ -158,10 +161,7 @@ func _ready():
 		randomize()
 		personality[i] = clamp(personality[i]+rand_range(-0.3, 0.3), 0, 1)+0.00001
 		$StatDisplay/VBoxContainer/Personality.get_child(i).text = str(personality[i])
-	for i in range(5):
-		randomize()
-		lilStats[i] = clamp(lilStats[i]+rand_range(-0.2, 0.2), 0, 1)+0.00001
-		$StatDisplay/VBoxContainer/Stats.get_child(i).text = str(lilStats[i])
+
 	for i in range(5):
 		randomize()
 		interestArray[i] = interestArray[i]+rand_range(-0.4, 0.4)
@@ -172,10 +172,7 @@ func _ready():
 		knowledgeArray[i]+rand_range(-0.2, 0.2)
 		#knowledgeArray[i] = clamp(knowledgeArray[i]+rand_range(-0.2, 0.2), 0, 1)+0.00001
 		$StatDisplay/VBoxContainer/Knowledge.get_child(i).text = str(knowledgeArray[i])
-	for i in range(5):
-		randomize()
-		consumptionRates[i] = clamp(consumptionRates[i]+rand_range(-0.3, 0.3), 0, 1)+0.00001
-		$StatDisplay/VBoxContainer/ConsumptionRates.get_child(i).text = str(consumptionRates[i])
+
 	$Timer.wait_time -= lilStats[4] #speed mitigates timer speed
 	currentActionState = actionState.SEARCH
 	self.currentTarget = self
@@ -217,16 +214,18 @@ func _on_Area2D_area_entered(area):
 	var ownerOfReceivedSignal = area.get_parent()
 	if area.is_in_group("resource"):
 		#print('OBTAINED RESOURCE')
+		var amount_to_give = randi()%90+10
+		self.dopamine += amount_to_give/300
 		if ownerOfReceivedSignal.get_name() == "Crystal":
-			resourceStats[0] += rand_range(10,90)
+			resourceStats[0] += amount_to_give
 		elif ownerOfReceivedSignal.get_name() == "Metal":
-			resourceStats[1] += rand_range(10,90)
+			resourceStats[1] += amount_to_give
 		elif ownerOfReceivedSignal.get_name() == "Fuel":
-			resourceStats[2] += rand_range(10,90)
+			resourceStats[2] += amount_to_give
 		elif ownerOfReceivedSignal.get_name() == "Carbon":
-			resourceStats[3] += rand_range(10,90)
+			resourceStats[3] += amount_to_give
 		elif ownerOfReceivedSignal.get_name() == "Rubber":
-			resourceStats[4] += rand_range(10,90)
+			resourceStats[4] += amount_to_give
 		currentActionState = actionState.SEARCH
 		moveNPC()
 		ownerOfReceivedSignal.queue_free()
@@ -234,6 +233,7 @@ func _on_Area2D_area_entered(area):
 		print("CONVO RECEIVED BY NPC")
 		print(ownerOfReceivedSignal)
 		self.prevTalkDamageReceived = ownerOfReceivedSignal.handleConvoBubble(self, ownerOfReceivedSignal)
+		self.doapamine += prevTalkDamageReceived
 		fluctStats[2] += prevTalkDamageReceived #add talkDamageDealt to affinity
 		#ownerOfReceivedSignal.genericReactionToConvoBubble(ownerOfReceivedSignal, self)
 		NPCreactionToConvoBubble(ownerOfReceivedSignal)
@@ -269,18 +269,21 @@ func calculateAttackDecision(playerNode):
 	if currentTempState == tempState.HOSTILE or currentGoalState == goalState.STRENGTHEN:
 		if attackOrNot > 2:
 			modulate = Color(1,0,0,1)
+			currentTarget = playerNode
 			NPCexitTalkSession(actionState.ATTACK)
 		else:
 			calculateTalkDecision(playerNode)
 	elif currentTempState == tempState.AFRAID:
 		if attackOrNot > 5:
 			modulate = Color(1,0,0,1)
+			currentTarget = playerNode
 			NPCexitTalkSession(actionState.ATTACK)
 		else:
 			calculateTalkDecision(playerNode)
 	else:
 		if attackOrNot > 3:
 			modulate = Color(1,0,0,1)
+			currentTarget = playerNode
 			NPCexitTalkSession(actionState.ATTACK)
 		else:
 			calculateTalkDecision(playerNode)
@@ -531,6 +534,7 @@ func _on_Timer_timeout():
 		$Tween.interpolate_property($BigSensoryRayCast2D, "rotation_degrees", initRandRot, initRandRot+360, 2, Tween.TRANS_CUBIC, Tween.EASE_OUT)
 		$Tween.start()
 		fluctStats[6] -= 0.01 #loneliness
+		self.dopamine -= 0.01 #dopamine
 		if bigStats[0] < lilStats[0]*250: #charisma*250==max_social_stamina
 			bigStats[0] += 0.5
 	else:
@@ -563,5 +567,8 @@ func NPCexitTalkSession(newActionState):
 	$ConvoNode.set_deferred("monitorable", false)
 	$BigSensoryRayCast2D.set_deferred("monitoring", true)
 	self.set_deferred("monitorable", true)
-	currentTarget = self
+	if newActionState == actionState.ATTACK:
+		pass
+	else:
+		currentTarget = self
 	currentActionState = newActionState

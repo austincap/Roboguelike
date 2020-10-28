@@ -95,7 +95,7 @@ equipmentSlot = [ ExtResource( 3 ), ExtResource( 4 ) ]
 "player",
 ]]
 collision_layer = 4
-collision_mask = 100
+collision_mask = 228
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
 shape = SubResource( 1 )
@@ -151,15 +151,11 @@ one_shot = true
 [node name="Sprite" type="Sprite" parent="."]
 texture = ExtResource( 2 )
 hframes = 4
-frame = 1
 
 [node name="EquippedItemNode" type="Node2D" parent="."]
 
 [node name="HungerTimer" type="Timer" parent="."]
 autostart = true
-
-[node name="Line2D" type="Line2D" parent="."]
-visible = false
 
 [node name="ConvoNode" parent="." instance=ExtResource( 6 )]
 visible = false

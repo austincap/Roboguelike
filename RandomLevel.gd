@@ -6,11 +6,11 @@ var metalScene = preload("res://Resources/Metal.tscn")
 var carbonScene = preload("res://Resources/Carbon.tscn")
 var crystalScene = preload("res://Resources/Crystal.tscn")
 #var playerScene = preload("res://Player/Player.tscn")
-var characterScene = preload("res://Characters/NPC.tscn")
+#var characterScene = preload("res://Characters/NPC.tscn")
 #var hackerScene = load("res://Characters/Hacker.tscn")
 #var slinkerScene = load("res://Characters/Slinker.tscn")
-#var scrapperScene = load("res://Characters/Scrapper.tscn")
-#var forkerScene = load("res://Characters/Forker.tscn")
+var scrapperScene = load("res://Characters/Scrapper.tscn")
+var forkerScene = load("res://Characters/Forker.tscn")
 var wingerScene = load("res://Characters/Winger.tscn")
 var lockedBarricadeScene = preload("res://LevelElements/Entrances/LockedBarricade.tscn")
 #var hazardScene = load("res://LevelElements/Hazard.tscn")
@@ -33,9 +33,10 @@ var NPCArray = []
 var portalArray = []
 var resourceArray = []
 var tempArray = []
-var NPCLikelihood = 0.3
+var NPCLikelihood = 0.4
 var resourceLikelihood = 0.5
 var hazardLikelihood = 0.2
+var NPCid = 0
 
 func getRandomNumber(num):
 	rand_generate.randomize()
@@ -53,7 +54,7 @@ func _ready():
 	var scene
 	var chunk
 	var element
-	var NPCid = 0
+	
 	var chunkIdToGet = northConnection+eastConnection+southConnection+westConnection
 	for y_chunk in range(y_chunks):
 		for x_chunk in range(x_chunks):
@@ -118,36 +119,26 @@ func _ready():
 				tryToRandomlyPlaceElement(element, chunk)
 			#add NPCs
 			randomize()
-			#if rand_range(0.0, 1.0) < NPCLikelihood:
-			if true:
-			
-#			if x_chunk==0 and y_chunk==0:
-#				element = characterScene.instance()
-#				tryToRandomlyPlaceElement(element, chunk)
-				
-#				var NPCType = getRandomNumber(4)
-#				if NPCType == "0":
-#					for i in int(getRandomNumber(6)):
-#						element = slinkerScene.instance()
-#						tryToRandomlyPlaceElement(element, chunk)
-#				elif NPCType == "1":
-#					for i in int(getRandomNumber(2)):
-#						element = hackerScene.instance()
-#						tryToRandomlyPlaceElement(element, chunk)
-#				elif NPCType == "2":
-#					for i in int(getRandomNumber(3)):
-#						element = scrapperScene.instance()
-#						tryToRandomlyPlaceElement(element, chunk)
-#				for i in int(getRandomNumber(1)):
-#					element = characterScene.instance()
-#					element.NPCid = NPCid
-#					NPCid += 1
-#					tryToRandomlyPlaceElement(element, chunk)
-				for i in int(getRandomNumber(1)):
-					element = wingerScene.instance()
-					element.NPCid = NPCid
-					NPCid += 1
-					tryToRandomlyPlaceElement(element, chunk)
+			if rand_range(0.0, 1.0) < NPCLikelihood:
+				var NPCType = getRandomNumber(2)
+				if NPCType == "0":
+					for i in int(getRandomNumber(3)):
+						element = forkerScene.instance()
+						element.NPCid = NPCid
+						NPCid += 1
+						tryToRandomlyPlaceElement(element, chunk)
+				elif NPCType == "1":
+					for i in int(getRandomNumber(4)):
+						element = wingerScene.instance()
+						element.NPCid = NPCid
+						NPCid += 1
+						tryToRandomlyPlaceElement(element, chunk)
+				elif NPCType == "2":
+					for i in int(getRandomNumber(3)):
+						element = scrapperScene.instance()
+						element.NPCid = NPCid
+						NPCid += 1
+						tryToRandomlyPlaceElement(element, chunk)
 			#add hazards and flavor objects
 			randomize()
 			if rand_range(0.0, 1.0) < hazardLikelihood:
@@ -165,6 +156,9 @@ func checkNPCs():
 				i+=1
 	print(i)
 	elementsChecked = true
+
+
+	
 
 func _unhandled_input(event: InputEvent) -> void:
 	if $PlayerNode.currentPlayerState != $PlayerNode.possiblePlayerStates.TALKING:

@@ -6,7 +6,7 @@ var aimAngle = 0
 enum possiblePlayerStates{TALKING, TRADING, COMBAT, HACKING, NORMAL, LOCKEDON}
 var currentPlayerState = possiblePlayerStates.NORMAL
 
-
+var currentHP = 40
 var topicId = 0
 var rhetoricId = 1
 var currentEquipmentIndex = 0
@@ -357,11 +357,22 @@ func _on_Area2D_area_entered(area):
 				self.global_position = self.get_parent().portalArray[0]+Vector2(0,40)
 			else:
 				self.global_position = self.get_parent().portalArray[portalIndex+1]+Vector2(0,40)
-				
+		elif area.is_in_group("weapon"):
+			area.queue_free()
+			self.currentHP -= 2
 		elif area.is_in_group("resource"):
-			#print('OBTAINED RESOURCE')
-			if ownerOfReceivedSignal.get_name() == "Fuel":
-				resourceStats[2] += rand_range(10,90)
+			var amount_to_give = randi()%90+10
+			if ownerOfReceivedSignal.get_name() == "Crystal":
+				resourceStats[0] += amount_to_give
+			elif ownerOfReceivedSignal.get_name() == "Metal":
+				resourceStats[1] += amount_to_give
+			elif ownerOfReceivedSignal.get_name() == "Fuel":
+				resourceStats[2] += amount_to_give
+			elif ownerOfReceivedSignal.get_name() == "Carbon":
+				resourceStats[3] += amount_to_give
+			elif ownerOfReceivedSignal.get_name() == "Rubber":
+				resourceStats[4] += amount_to_give
+			displayMessage("obtained " + str(amount_to_give) + " " + ownerOfReceivedSignal.get_name(), 5)
 			ownerOfReceivedSignal.queue_free()
 		else: #if interfacesignal from NPC
 			react(3)
