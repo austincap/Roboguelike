@@ -136,7 +136,8 @@ func _input(event):
 		if event.is_action_released("quickload"):
 			var packed_scene = load("res://savedscene.tscn")
 			var my_scene = packed_scene.instance()
-			add_child(my_scene)
+			get_tree().change_scene("res://savedscene.tscn")
+			#add_child(my_scene)
 	elif currentPlayerState == possiblePlayerStates.LOCKEDON:
 		if !event.is_action_pressed("interface"):
 			if event.is_action_pressed("downmove"):
@@ -360,6 +361,7 @@ func _on_Area2D_area_entered(area):
 		elif area.is_in_group("weapon"):
 			area.queue_free()
 			self.currentHP -= 2
+			displayMessage("-"+str(2)+" damage!", 3)
 		elif area.is_in_group("resource"):
 			var amount_to_give = randi()%90+10
 			if ownerOfReceivedSignal.get_name() == "Crystal":

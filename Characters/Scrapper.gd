@@ -17,8 +17,10 @@ func _ready():
 	raceId = 2
 
 func _physics_process(delta):
-	if currentActionState == actionState.ATTACK:
-		$LaserGunSprite.fire_laser(currentTarget)
+	if currentActionState == actionState.ATTACK and justUsedSkill == false:
+		$EquippedItemNode/LaserGunSprite.fire_laser(currentTarget)
+		yield(get_tree().create_timer(1.0), "timeout")
+		justUsedSkill = true
 	if velocity.y >= 1:
 		if abs(velocity.x) < 0.28:
 			#DOWN

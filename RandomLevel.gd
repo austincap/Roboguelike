@@ -7,12 +7,13 @@ var carbonScene = preload("res://Resources/Carbon.tscn")
 var crystalScene = preload("res://Resources/Crystal.tscn")
 #var playerScene = preload("res://Player/Player.tscn")
 #var characterScene = preload("res://Characters/NPC.tscn")
-#var hackerScene = load("res://Characters/Hacker.tscn")
+var hackerScene = preload("res://Characters/Hacker.tscn")
 #var slinkerScene = load("res://Characters/Slinker.tscn")
-var scrapperScene = load("res://Characters/Scrapper.tscn")
-var forkerScene = load("res://Characters/Forker.tscn")
-var wingerScene = load("res://Characters/Winger.tscn")
+var scrapperScene = preload("res://Characters/Scrapper.tscn")
+var forkerScene = preload("res://Characters/Forker.tscn")
+var wingerScene = preload("res://Characters/Winger.tscn")
 var lockedBarricadeScene = preload("res://LevelElements/Entrances/LockedBarricade.tscn")
+var keyScene = preload("res://LevelElements/Entrances/LockedBarricade.tscn")
 #var hazardScene = load("res://LevelElements/Hazard.tscn")
 var portalScene = preload("res://LevelElements/Entrances/Portal.tscn")
 
@@ -120,7 +121,7 @@ func _ready():
 			#add NPCs
 			randomize()
 			if rand_range(0.0, 1.0) < NPCLikelihood:
-				var NPCType = getRandomNumber(2)
+				var NPCType = getRandomNumber(3)
 				if NPCType == "0":
 					for i in int(getRandomNumber(3)):
 						element = forkerScene.instance()
@@ -128,7 +129,7 @@ func _ready():
 						NPCid += 1
 						tryToRandomlyPlaceElement(element, chunk)
 				elif NPCType == "1":
-					for i in int(getRandomNumber(4)):
+					for i in int(getRandomNumber(3)):
 						element = wingerScene.instance()
 						element.NPCid = NPCid
 						NPCid += 1
@@ -139,12 +140,30 @@ func _ready():
 						element.NPCid = NPCid
 						NPCid += 1
 						tryToRandomlyPlaceElement(element, chunk)
+				elif NPCType == "3":
+					for i in int(getRandomNumber(2)):
+						element = hackerScene.instance()
+						element.NPCid = NPCid
+						NPCid += 1
+						tryToRandomlyPlaceElement(element, chunk)
 			#add hazards and flavor objects
 			randomize()
 			if rand_range(0.0, 1.0) < hazardLikelihood:
 				element = lockedBarricadeScene.instance()
+				giveRandomNPCitem(3)
 				tryToRandomlyPlaceElement(element, chunk)
 	#$Camera2D.make_current()
+
+func giveRandomNPCitem(itemnum):
+	if NPCArray.size()>0:
+		var randomNPC = NPCArray[randi()%NPCArray.size()]
+		if randomNPC.is_in_group("NPC"):
+			for i in randomNPC.inventory:
+				if randomNPC.inventory[i] == 0:
+					randomNPC.inventory[i] = itemnum
+					return
+			return
+
 
 func checkNPCs():
 	var i = 0
@@ -158,7 +177,6 @@ func checkNPCs():
 	elementsChecked = true
 
 
-	
 
 func _unhandled_input(event: InputEvent) -> void:
 	if $PlayerNode.currentPlayerState != $PlayerNode.possiblePlayerStates.TALKING:
@@ -167,7 +185,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.button_index != BUTTON_LEFT or not event.pressed:
 			return
 		var new_path = $Navigation2D.get_simple_path($PlayerNode.global_position, get_global_mouse_position())
-		#$PlayerNode/Line2D.points = new_path
 		$PlayerNode.path = new_path
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -208,6 +225,7 @@ func fuckFunction(NPCnode, playerNode):
 	var playerScene = load("res://Player/Player.tscn")
 	var newPlayer = playerScene.instance()
 	newPlayer.lilStats[4] = NPCnode.lilStats[4]
+	newPlayer.personality = NPCnode.personality
 	newPlayer.modulate = Color(0, 1, 0, 1)
 	newPlayer.scale = Vector2(2, 2)
 	add_child(newPlayer)

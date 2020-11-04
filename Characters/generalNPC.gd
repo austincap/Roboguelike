@@ -19,6 +19,7 @@ var raceId = 3
 var NPCid
 
 #FLUCTUATING STATS
+var reputation = 0
 var dopamine = 0.5
 var courage = 0.56
 var loneliness = 0.99
@@ -32,6 +33,7 @@ var rhetoricId = 0
 var currentTarget = null
 var clickedThisNPC = false
 var justSentConvo = false
+var justUsedSkill = false
 #TEMP STATES
 enum tempState{RELAXED, WARY, HOSTILE, AFRAID, JAZZED}
 var currentTempState = tempState.RELAXED
@@ -87,7 +89,7 @@ func moveNPC():
 		navSpeed = lilStats[4]*390+40
 		get_node("BigSensoryRayCast2D").set_deferred("monitoring", false)
 		new_path = self.get_parent().get_parent().get_simple_path(self.global_position, self.currentTarget.global_position, true)
-	elif currentActionState == actionState.TALKING or currentActionState == actionState.LOCKEDON:
+	elif currentActionState == actionState.TALKING or currentActionState == actionState.LOCKEDON or currentActionState == actionState.ATTACK:
 		pass
 	elif currentActionState == actionState.ESCAPING:
 		var randomPositionChange
@@ -101,7 +103,6 @@ func moveNPC():
 		elif randf() < 1:
 			randomPositionChange = Vector2(rand_range(60,100), rand_range(60,100))
 		new_path = self.get_parent().get_parent().get_simple_path(self.global_position, self.global_position+20*randomPositionChange, true)
-	
 	else:
 
 		navSpeed = lilStats[4]*390
@@ -140,9 +141,6 @@ func _on_Personality_mouse_exited(rownode):
 		else:
 			child.text = child.get_name().substr(0,1)+"."+child.get_name().substr(2)
 		child.set_name(tempName)
-
-
-
 
 func _ready():
 	$StatDisplay/VBoxContainer/Personality.connect("mouse_entered", self, "_on_Personality_mouse_entered", [$StatDisplay/VBoxContainer/Personality])
@@ -233,7 +231,7 @@ func _on_Area2D_area_entered(area):
 		print("CONVO RECEIVED BY NPC")
 		print(ownerOfReceivedSignal)
 		self.prevTalkDamageReceived = ownerOfReceivedSignal.handleConvoBubble(self, ownerOfReceivedSignal)
-		self.doapamine += prevTalkDamageReceived
+		self.dopamine += prevTalkDamageReceived
 		fluctStats[2] += prevTalkDamageReceived #add talkDamageDealt to affinity
 		#ownerOfReceivedSignal.genericReactionToConvoBubble(ownerOfReceivedSignal, self)
 		NPCreactionToConvoBubble(ownerOfReceivedSignal)

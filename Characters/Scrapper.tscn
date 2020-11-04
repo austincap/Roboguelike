@@ -214,6 +214,10 @@ hframes = 4
 
 [node name="EquippedItemNode" type="Node2D" parent="."]
 
+[node name="LaserGunSprite" parent="EquippedItemNode" instance=ExtResource( 7 )]
+position = Vector2( 23.8991, -8.94837 )
+rotation = 1.5708
+
 [node name="ConvoNode" parent="." instance=ExtResource( 3 )]
 visible = false
 position = Vector2( 40, -40 )
@@ -233,10 +237,6 @@ __meta__ = {
 process_mode = 0
 wait_time = 8.0
 one_shot = true
-
-[node name="LaserGunSprite" parent="." instance=ExtResource( 7 )]
-position = Vector2( 23.8991, -8.94837 )
-rotation = 1.5708
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]
 [connection signal="body_entered" from="Area2D" to="." method="_on_Area2D_body_entered"]
 [connection signal="input_event" from="Area2D" to="." method="_on_Area2D_input_event"]

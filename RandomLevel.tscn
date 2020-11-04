@@ -16,5 +16,4 @@ scale = Vector2( 0.5, 0.5 )
 
 [node name="Navigation2D" type="Navigation2D" parent="."]
 
-[node name="Line2D" type="Line2D" parent="."]
-visible = false
+[node name="BaseNode" type="Node2D" parent="."]
